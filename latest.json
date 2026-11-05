@@ -1,7 +1,7 @@
 {
- "versionCode": 15,
- "versionName": "1.14",
+ "versionCode": 16,
+ "versionName": "1.15",
  "url": "https://raw.githubusercontent.com/mode11h19-cell/yawmi-releases/main/yawmi.apk",
- "sha256": "2e50011aa37d994cdae692b1c84f3e2cbf90c52a4da353f9e23dc3bc8aa4062f",
- "notes": "• تفتح الدعاء من المهمة وتشغّله\n• تسريع الصوت من الشريط"
+ "sha256": "689f4cfcd29601dc3e6574825aaba1cb3259791b16fac2768ec53f67e620c146",
+ "notes": "• منبّه الصبح ويا ملخّص يومك من ILO\n• يسألك «سويتها لو أأجّلها؟» بعد وقت المهمة\n• الأذان والأدعية يذكّرونك حتى لو التطبيق مسدود\n• منبّه عادي ونغمة من ملفاتك"
 }
