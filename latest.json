@@ -1,7 +1,7 @@
 {
- "versionCode": 14,
- "versionName": "1.13",
+ "versionCode": 15,
+ "versionName": "1.14",
  "url": "https://raw.githubusercontent.com/mode11h19-cell/yawmi-releases/main/yawmi.apk",
- "sha256": "03b036c17ad3b65941491fa583b70bee21f104b44a9caa429a483bfcb439c6fb",
- "notes": "• اسم الزيارة يطلع بشريط «يشتغل هسه»\n• تختار: لما تخلص الزيارة تكمل للي بعدها أو توكف"
+ "sha256": "2e50011aa37d994cdae692b1c84f3e2cbf90c52a4da353f9e23dc3bc8aa4062f",
+ "notes": "• تفتح الدعاء من المهمة وتشغّله\n• تسريع الصوت من الشريط"
 }
