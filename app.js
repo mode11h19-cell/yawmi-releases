@@ -181,7 +181,9 @@ const Q=new URLSearchParams(location.search),WS=Q.has("widgetsync");
 let D=/^\d{4}-\d{2}-\d{2}$/.test(Q.get("d")||"")?Q.get("d"):today();
 let urlDone=!(Q.get("task")||Q.get("add"));
 function urlOpen(){if(urlDone||WS)return;urlDone=true;try{history.replaceState(null,"",location.pathname)}catch(e){}
-  if(Q.get("task")){const it=itemsOn(D).find(i=>i.id===Q.get("task"));if(it)taskSheet(it)}else addSheet(false,D)}
+  if(Q.get("task")){const it=itemsOn(D).find(i=>i.id===Q.get("task"));if(it)taskSheet(it)}
+  else{const tx=(Q.get("text")||"").slice(0,500),vo=Q.get("voice")==="1"; // ?text= من «شارك بيومي»، ?voice=1 من زر المايك بالويدجت
+    if(!ORG())hAdd({day:D,text:tx,voice:vo});else{addSheet(vo,D);const ta=$("#ta");if(ta&&tx)ta.value=tx}}}
 function tile(i){const s=state(i);
   return `<button class="tile ${s}" data-id="${i.id}"><span class="hr">${i.hour!=null?`<b${i.em?' style="font-size:14px"':""}>${i.hour%12||12}${i.em?":"+pad(i.em):""}</b><small>${part(i.hour)}</small>`:s==="done"?I.ok:"<b>؟</b>"}</span>
   <span class="tx"><b>${esc(i.title)}</b><small>${LBL[s]}${i.dur?` · ${durTxt(i.dur)}`:""}${i.rep!=="none"?` · ${I.rep}${REP[i.rep]}`:""}</small></span></button>`}
@@ -215,7 +217,7 @@ function render(){
   $("#trays").innerHTML=html;
   }
   if(BT)btAfter();
-  try{if(window.YawmiAndroid)YawmiAndroid.setWidget(JSON.stringify({...wDay(today()),tomorrow:wDay(add(today(),1)),streak:streak(),lvl:btLv(),remind:S.cfg.remind||0,phone:rto()!=="tg",pray:prayOn(today()).map(p=>({t:p.n,m:p.m})),prem:pcfg().rem,...alarmPayload(),hadj:S.cfg.hadj||0,cnt:S.cfg.cnt||{},occ:occs().map(o=>({t:o.t,d:o.d}))}))}catch(e){}
+  try{if(window.YawmiAndroid)YawmiAndroid.setWidget(JSON.stringify({...wDay(today()),tomorrow:wDay(add(today(),1)),streak:streak(),lvl:btLv(),remind:S.cfg.remind||0,phone:rto()!=="tg",pray:prayOn(today()).map(p=>({t:p.n,m:p.m})),prem:pcfg().rem,...alarmPayload(),hadj:S.cfg.hadj||0,cnt:S.cfg.cnt||{},occ:occs().map(o=>({t:o.t,d:o.d})),ras:rasList().slice(0,12).map(t=>({id:t.id,t:t.title,d:t.date}))}))}catch(e){}
   pushAlarms();
 }
 // جملة يكتبها بنفسه بالإعدادات، تطلع سطر صغير فوگ التحية (cfg.motto)
@@ -235,7 +237,7 @@ async function andPending(){
   if(!Array.isArray(L)||!L.length)return;
   const ids=[];
   L.forEach(a=>{if(!a||!a.id)return;ids.push(a.id);const it=itemsOn(a.day||today()).find(i=>i.id===a.id);if(!it)return;
-    if(a.st==="done")setI(it,{st:"done"});else if(a.st==="todo")setI(it,{st:"todo",s:null,e:null});
+    if(a.st==="done"){setI(it,{st:"done"});const t=findT(a.id);if(t&&t.rep==="none"&&t.hour==null&&t.date<today())t.date=today()/* براسي: مثل hDone */}else if(a.st==="todo")setI(it,{st:"todo",s:null,e:null});
     if(Number.isInteger(a.hour)&&a.hour>=0&&a.hour<24)setI(it,{hour:a.hour})});
   clearTimeout(sT);sT=null;
   let ok=false;for(let k=0;k<20&&!ok;k++){if(!busy)ok=(await flush())===true;if(!ok)await new Promise(r=>setTimeout(r,1500))}
@@ -352,7 +354,11 @@ function taskSheet(it){if(!ORG())return hSheet(it);
 }
 
 /* ---------- add ---------- */
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;
+// بتطبيق الأندرويد (1.17+) المايك يروح لخدمة الكلام مال التلفون: YawmiAndroid.listen() ويرجع بـ onYawmiHeard(نص، خطأ)
+const NSR=window.YawmiAndroid&&typeof YawmiAndroid.listen==="function"?class{start(){NSR.cur=this;try{YawmiAndroid.listen(this.lang||"ar-IQ")}catch(e){NSR.cur=null;this.onerror&&this.onerror(e)}}stop(){}}:null;
+window.onYawmiHeard=(t,err)=>{const r=NSR&&NSR.cur;if(!r)return;NSR.cur=null;
+  if(t)r.onresult&&r.onresult({resultIndex:0,results:[Object.assign([{transcript:String(t)}],{isFinal:true})]});else if(err)r.onerror&&r.onerror({});r.onend&&r.onend()};
+const SR=NSR||window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;
 function stopMic(){if(rec){try{rec.stop()}catch(e){}rec=null}}
 const clearDemo=()=>{if(S.demo){S.tasks=S.tasks.filter(t=>!t.demo);S.log={};S.demo=false}};
 // يوم المهمة: الافتراضي اليوم (أو اليوم اللي بالرابط ?add=1&d=)، ويتغيّر من الأزرار فوگ
