@@ -1,7 +1,7 @@
 (()=>{
 const DAYS=["السبت","الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة"];
 const H0=7,H1=24,KEY="yawmi.clay";
-const REP={none:"مرة وحدة",daily:"كل يوم",work:"أيام الدوام"};
+const REP={none:"مرة وحدة",daily:"كل يوم",work:"أيام الدوام",wk:"بالأسبوع"};
 const $=s=>document.querySelector(s);
 const uid=()=>Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-3);
 const pad=n=>String(n).padStart(2,"0");
@@ -41,7 +41,8 @@ function seed(){
   mk("رد على رسائل الزباين",9,{rep:"daily"});mk("مراجعة هوية تكتم",8);mk("تصوير ريلز المطعم",16);mk("مونتاج ريل الكارسيل",17);
   mk("مكالمة المطبعة",null);mk("تصميم بوستات الأسبوع",null);mk("اجتماع ويا عميل جديد",19);mk("رياضة",22,{rep:"work"});mk("تقرير الإعلانات",null);
   L[T[0].id+"|"+t]={st:"done"};T[1].st="done";
-  return {v:6,tasks:T,log:L,cfg:{workS:9,workE:15,remind:10,tg:false,gcal:false,brain:false},demo:true};
+  let org;try{if(localStorage.getItem("yawmi-org")==="1")org=true}catch(e){} // للفحوصات القديمة بس: تبدي بوضع التنظيم
+  return {v:6,tasks:T,log:L,cfg:{workS:9,workE:15,remind:10,tg:false,gcal:false,brain:false,org},demo:true};
 }
 let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
 if(!S||S.v!==6)S=seed();
@@ -58,7 +59,7 @@ const daysTxt=a=>a.length===7?"كل يوم":a.length===6&&!a.includes(6)?"أيا
 const span=b=>`${hh(b.s)} لـ ${hh(b.e)}`;
 let syncOn=false,sT=null,BT=null;
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){};if(me){clearTimeout(sT);sT=setTimeout(()=>{sT=null;flush()},600)}};
-const occurs=(t,d)=>d<t.date?false:t.rep==="daily"?true:t.rep==="work"?di(d)!==6:d===t.date;
+const occurs=(t,d)=>d<t.date?false:t.rep==="daily"?true:t.rep==="work"?di(d)!==6:t.rep==="wk"?wkShow(t,d):d===t.date;
 // تقسيم الساعة: المهام اللي بدون دقيقة محددة تنرتّب ورا بعض بالدور (حسب مدتها، بلا مدة = ربع ساعة)، واللي دقيقتها محددة تبقى بمكانها والباقي يدور حواليها.
 // نفس المنطق بالسيرفر (yawmi-tick: slots). em = دقيقة البداية الفعلية.
 const dOf=i=>i.dur||15;
@@ -110,7 +111,7 @@ const LBL={none:"بدون ساعة",left:"باقية",late:"راحت ساعته�
 /* ---------- قاعدة البيانات على حسابه (Supabase) ---------- */
 const C=window.YAWMI||{};let sb=null,me=null,busy=false,again=false,needPull=false,pT=null;
 let snapT={},snapL={},snapC="";
-const tRow=t=>({id:t.id,title:t.title,date:t.date,hour:t.hour??null,rep:t.rep||"none",remind:t.remind!==false,st:t.st||"todo",s:t.s??null,e:t.e??null,dur:t.dur??null,note:t.note||null,min:t.min??null,dua:t.dua||null});
+const tRow=t=>({id:t.id,title:t.title,date:t.date,hour:t.hour??null,rep:t.rep||"none",remind:t.remind!==false,st:t.st||"todo",s:t.s??null,e:t.e??null,dur:t.dur??null,note:t.note||null,min:t.min??null,dua:t.dua||null,wk:t.rep==="wk"?(t.wk||3):null});
 const lRow=(k,v)=>{const i=k.lastIndexOf("|");return {task_id:k.slice(0,i),day:k.slice(i+1),hour:v.hour??null,st:v.st??null,s:v.s??null,e:v.e??null}};
 const cOf=c=>{const {tg,gcal,...r}=c;return r};
 const noNull=o=>{const r={};for(const k in o)if(o[k]!==null&&o[k]!==undefined)r[k]=o[k];return r};
@@ -137,7 +138,7 @@ async function flush(){
 }
 async function pull(){
   if(!me)return;if(busy||sT||!scrim.hidden){needPull=true;return}needPull=false;
-  const [a,b,c,g]=await Promise.all([sb.from("tasks").select("id,title,date,hour,rep,remind,st,s,e,dur,note,min,dua").order("created_at").order("id"),
+  const [a,b,c,g]=await Promise.all([sb.from("tasks").select("id,title,date,hour,rep,remind,st,s,e,dur,note,min,dua,wk").order("created_at").order("id"),
     sb.from("logs").select("task_id,day,hour,st,s,e").gte("day",add(today(),-120)),sb.from("cfg").select("cfg,tg_chat_id").maybeSingle(),sb.rpc("gcal_status")]);
   if(a.error||b.error||c.error){console.warn(a.error||b.error||c.error);return}
   if(busy||sT||!scrim.hidden){needPull=true;return}
@@ -190,6 +191,7 @@ function render(){
   let s="";try{s=pd(D).toLocaleDateString("ar-IQ",{weekday:"long",day:"numeric",month:"long"}).replace("،","")}catch(e){}
   try{const hj=new Intl.DateTimeFormat("ar-IQ-u-ca-islamic-umalqura",{day:"numeric",month:"long",timeZone:"Asia/Baghdad"}).format(new Date(pd(D).getTime()+(12+24*(S.cfg.hadj||0))*36e5));if(hj)s+=" · "+hj}catch(e){} // التاريخ الهجري (أم القرى)
   $("#dl").textContent=s;$("#demo").hidden=!S.demo;
+  if(hassaMode())hassaRender();else{
   $("#days").innerHTML=[...Array(7)].map((_,k)=>{const d=add(today(),k),a=itemsOn(d),dn=a.filter(x=>x.st==="done").length;
     return `<button class="dy press" data-d="${d}" aria-pressed="${d===D}"><b>${dayName(d)}</b><small>${di(d)===6&&!a.length?"راحة":a.length?`${dn} من ${a.length}`:"فاضي"}</small></button>`}).join("");
   const A=itemsOn(D),doing=A.find(i=>i.st==="doing"),nx=nextItem(A);
@@ -211,6 +213,7 @@ function render(){
   const D_=A.filter(i=>i.st==="done");
   html+=`<details class="clay tray donebox" ${D_.length&&D_.length<=4?"open":""}><summary><header><span class="ic">${I.done}</span><div><h3>سويتها</h3><small>${D_.length?"دوس حتى تشوفها":"تجي هنا لما تخلصها"}</small></div><span class="cnt">${D_.length}</span></header></summary><div class="tiles" style="margin-top:14px">${D_.map(tile).join("")}</div></details>`;
   $("#trays").innerHTML=html;
+  }
   if(BT)btAfter();
   try{if(window.YawmiAndroid)YawmiAndroid.setWidget(JSON.stringify({...wDay(today()),tomorrow:wDay(add(today(),1)),streak:streak(),lvl:btLv(),remind:S.cfg.remind||0,phone:rto()!=="tg",pray:prayOn(today()).map(p=>({t:p.n,m:p.m})),prem:pcfg().rem,...alarmPayload(),hadj:S.cfg.hadj||0,cnt:S.cfg.cnt||{},occ:occs().map(o=>({t:o.t,d:o.d}))}))}catch(e){}
   pushAlarms();
@@ -292,7 +295,7 @@ function duaSec(it){const k=duaOf(it);
   return `<details class="sec"><summary><h4 style="display:inline">هاي دعاء؟ اختاره حتى تشغّله من هنا</h4></summary><div class="row" style="flex-wrap:wrap;margin-top:8px">${DUAS.map(([n])=>`<button class="pill" data-dua="${esc(n)}">${esc(n)}</button>`).join("")}</div></details>`}
 function openDua(k,play){const A=window.YawmiAndroid,th=isEve()?"dark":"light";
   try{if(A.openZyaraAt)return A.openZyaraAt(th,k,!!play);A.openZyara(th);toast("حدّث التطبيق حتى يفتح على الدعاء مباشرة")}catch(e){}}
-function taskSheet(it){
+function taskSheet(it){if(!ORG())return hSheet(it);
   const s=state(it);
   const tagBg={none:"var(--none)",left:"var(--left)",late:"var(--late)",doing:"var(--doing)",done:"var(--done)"}[s];
   const tagC={none:"var(--ink)",left:"var(--on-left)",late:"var(--on-late)",doing:"#F6EEDF",done:"var(--on-done)"}[s];
@@ -354,7 +357,7 @@ function stopMic(){if(rec){try{rec.stop()}catch(e){}rec=null}}
 const clearDemo=()=>{if(S.demo){S.tasks=S.tasks.filter(t=>!t.demo);S.log={};S.demo=false}};
 // يوم المهمة: الافتراضي اليوم (أو اليوم اللي بالرابط ?add=1&d=)، ويتغيّر من الأزرار فوگ
 const dLbl=d=>{try{return pd(d).toLocaleDateString("ar-IQ",{weekday:"long",day:"numeric",month:"long"}).replace("،","")}catch(e){return d}};
-function addSheet(voice,day=today()){let ad=day<today()?today():day;
+function addSheet(voice,day=today()){if(!ORG())return hAdd({voice,day});let ad=day<today()?today():day;
   const wk=[...Array(7)].map((_,k)=>add(today(),k));
   show(`<h3 id="adh">شنو عندك ${dayName(ad)}؟</h3>
   <div class="row" id="adays" style="flex-wrap:wrap;gap:6px">${wk.map(d=>`<button class="pill" data-ad="${d}" aria-pressed="${d===ad}">${dayName(d)}</button>`).join("")}<button class="pill" id="adOther" aria-pressed="${!wk.includes(ad)}">${wk.includes(ad)?"تاريخ ثاني":esc(dLbl(ad))}</button><input type="date" id="adPick" min="${today()}" value="${ad}" style="position:absolute;opacity:0;width:1px;height:1px;pointer-events:none"></div>
@@ -483,7 +486,7 @@ function setSheet(){
   const c=S.cfg,TH=[["light","صباحي"],["auto","تلقائي"],["dark","مسائي"]],A=ac(),P=pcfg();
   show(`<h3>الإعدادات</h3>
   ${sgp("التذكير",srow("bell","قبل المهمة",remTxt(c.remind),'id="stR"'))}
-  ${sgp("يومي",srow("cal","أوقاتي",c.blocks.length?c.blocks.length+" أوقات":"ماكو",'id="stm"')+srow("alarm","المنبه",A.alarms.length?A.alarms.length+" منبه":"والنغمة",'id="stA"'))}
+  ${sgp("يومي",srow("cal","أوقاتي",c.blocks.length?c.blocks.length+" أوقات":"ماكو",'id="stm"')+srow("alarm","المنبه",A.alarms.length?A.alarms.length+" منبه":"والنغمة",'id="stA"')+sswi("layers","وضع التنظيم",ORG(),'data-org')+`<p class="meta sorg">يرجّع الأسبوع وشرائط الساعات والمدة</p>`)}
   ${sgp("المنبهات",`<div class="sp"><span class="h">منبه الصبح ويا ملخص يومك من ILO</span>${sseg([`<button class="pill" data-wk="0" aria-pressed="${!A.wake.on}">مطفي</button>`,...WAKE.map(m=>`<button class="pill" data-wk="${m}" aria-pressed="${A.wake.on&&A.wake.m===m}" dir="ltr">${hm12(m)}</button>`)])}</div>`
     +sswi("ask","بعد المهمة يسألك «سويتها لو أأجّلها؟»",A.ask,`data-ak="${A.ask?0:1}"`)
     +sswi("book","دعاء العهد · بعد الصبح",A.duaR.ahd,'data-dr="ahd"')+sswi("book","دعاء كميل · ليلة الجمعة",A.duaR.kml,'data-dr="kml"'))}
@@ -518,6 +521,7 @@ function setSheet(){
       if(wk.dataset.ak)c.ask=wk.dataset.ak==="1";if(wk.dataset.dr){c.duaR={...A.duaR,[wk.dataset.dr]:!A.duaR[wk.dataset.dr]}}save();render();reS(setSheet);return}
     const oc=e.target.closest("[data-oc]");if(oc){c.occ=occs().filter(o=>o.id!==oc.dataset.oc);if(!c.occ.length)c.occ=undefined;save();render();$("#ocL").innerHTML=occHtml();return}
     const hj=e.target.closest("[data-hj]");if(hj){c.hadj=+hj.dataset.hj||undefined;save();render();reS(setSheet);return}
+    if(e.target.closest("[data-org]")){c.org=ORG()?undefined:true;save();render();reS(setSheet);return}
     const t=e.target.closest("[data-th]");if(t){c.theme=t.dataset.th;save();applyTheme();reS(setSheet)}};
 }
 // صفحة «التذكير» من الإعدادات: قبل المهمة بكم دقيقة، ووين يوصل (بس داخل الـAPK)
@@ -707,6 +711,148 @@ function alarmEdit(a){const isNew=!a,w=a?{...a,days:a.days.slice()}:{id:uid(),m:
 {const b=document.createElement("button");b.id="mAlarm";b.innerHTML=`<span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7"/><path d="M12 10v3l2 1.5M5 4L2.5 6.5M19 4l2.5 2.5"/></svg></span>منبه`;b.onclick=alarmSheet;$("#mWeek").after(b)}
 $("#demo").onclick=()=>{clearDemo();save();render();toast("انمسحت. دوس «ضيف» وابدي")};
 
+/* ---------- «هسه»: الواجهة الجديدة (ثوابتي / براسي / مواعيد) ---------- */
+// الخانة تنعرف من الحقول الموجودة، بلا عمود جديد:
+//   ثوابتي = تتكرر (daily / work / wk) · براسي = مرة وحدة بلا ساعة · مواعيد = مرة وحدة بساعة
+// wk = «كم مرة بالأسبوع» (t.wk من ١ لـ ٦): تطلع كل يوم لحد ما تنسوّى هالعدد من السبت للجمعة.
+// «وضع التنظيم» (cfg.org) يرجّع الواجهة القديمة كلها (الأسبوع، الشرائط، المدة).
+const ORG=()=>S.cfg.org===true;
+const kindOf=t=>t.rep!=="none"?"fix":t.hour==null?"ras":"app";
+const KIND=[["ras","براسي"],["fix","ثابت"],["app","موعد"]];
+const rasList=()=>{const T=today();return S.tasks.map((t,k)=>[t,k]).filter(([t])=>t.rep==="none"&&t.hour==null&&t.st!=="done"&&t.date<=T)
+  .sort((a,b)=>a[0].date<b[0].date?-1:a[0].date>b[0].date?1:a[1]-b[1]).map(x=>x[0])};
+const ageOf=t=>Math.round((pd(today())-pd(t.date))/864e5);
+const ageTxt=n=>`من ${arN(n)} ${n<=10?"أيام":"يوم"}`;
+const dots=(n,f)=>`<span class="dots" aria-label="${arN(f)} من ${arN(n)}">${[...Array(n)].map((_,k)=>`<i class="${k<f?"f":""}"></i>`).join("")}</span>`;
+let hOpen="",hSkip=new Set();
+const HI={
+  now:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/></svg>`,
+  mic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>`,
+  layers:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>`};
+SI.layers=HI.layers;
+// الواجهة: تتبدّل بين «هسه» والقديمة حسب وضع التنظيم، وILO ينتقل يم التحية
+function hassaMode(){const on=!ORG(),b=document.body;b.classList.toggle("hassa",on);
+  let H=$("#hassa");if(!H){H=document.createElement("div");H.id="hassa";$("#trays").after(H)}
+  const bt=$("#btBtn"),hd=$(".hd>div");
+  if(on){if(bt&&bt.parentNode!==hd)hd.prepend(bt);$("#now").innerHTML="";if(!$(".hsay")){const p=document.createElement("p");p.id="bsay";p.className="hsay";$("#hi").after(p)}}
+  else{if(bt&&bt.parentNode!==$("#nowWrap"))$("#nowWrap").append(bt);const p=$(".hsay");if(p)p.remove();H.innerHTML=""}
+  if(!$("#mNow")){const n=document.createElement("button");n.id="mNow";n.innerHTML=`<span class="k">${HI.now}</span>هسه`;n.onclick=()=>{hide();scrollTo({top:0,behavior:"smooth"})};$(".dock").prepend(n)}
+  return on}
+function hassaRender(){D=today();const T=D,A=itemsOn(T),now=nowM();
+  const fix=A.filter(i=>i.rep!=="none"),app=A.filter(i=>i.rep==="none"&&i.hour!=null).sort((a,b)=>ms(a)-ms(b)),ras=rasList();
+  const up=A.filter(i=>i.hour!=null&&i.st!=="done"&&i.hour*60+(i.em||0)>=now).sort((a,b)=>ms(a)-ms(b)),nx=up[0],af=up[1];
+  let h="";
+  if(S.demo)h+=`<div class="hnote"><span>هاي أمثلة حتى تشوف شلون يشتغل</span><button data-hdemo>امسحها</button></div>`;
+  else if(!S.cfg.hSeen)h+=`<div class="hnote">${HI.layers}<span>رتّبنا مهامك على ثلاث خانات</span><button data-hseen>تمام</button></div>`;
+  if(nx)h+=`<section class="hcard hnext"><div class="row"><span class="lab"><i></i>الجاي</span><button class="hp sm" data-hok="${nx.id}">سويتها</button></div>
+    <b class="nt">الساعة <span class="n">${(nx.hour%12||12)+(nx.em?":"+pad(nx.em):"")}</span> · ${esc(nx.title)}</b>${af?`<span class="sub">بعدها: ${esc(af.title)}</span>`:""}</section>`;
+  let one=ras.find(t=>!hSkip.has(t.id));if(!one&&ras.length){hSkip.clear();one=ras[0]}
+  h+=one?`<section class="hcard hone"><span class="lab">شغلة وحدة هسه</span><button class="big" data-hid="${one.id}">${esc(one.title)}</button>
+    <div class="hbtns"><button class="hp w" data-hdo="${one.id}">سويتها</button><button class="hp" data-hlater="${one.id}">مو هسه</button><button class="hp" data-hdel="${one.id}">شيلها</button></div></section>`
+    :`<section class="hcard hone hempty"><b class="big">ما براسك شي، ارتاح</b><span class="sub">إذا خطرلك شي، دوس «ضيف»</span></section>`;
+  const fd=fix.filter(i=>i.st==="done").length,ad=app.filter(i=>i.st!=="done").length;
+  const row=(k,t,c,body)=>`<button class="fold${hOpen===k?" op":""}" data-hfold="${k}" aria-expanded="${hOpen===k}"><span>${t}</span><span class="k">${c}</span></button>${hOpen===k?`<div class="hlist">${body}</div>`:""}`;
+  const fixRow=i=>{const w=i.t.rep==="wk"?wkCount(i.t,T):null;return `<div class="it${i.st==="done"?" dn":""}"><button class="tt" data-hid="${i.id}">${esc(i.title)}</button>${w!=null?dots(i.t.wk||3,w):""}<button class="o" data-hok="${i.id}" aria-label="${i.st==="done"?"رجّعها":"سويتها"}"></button></div>`};
+  const rasRow=t=>{const a=ageOf(t);return `<div class="it${a>7?" old":""}"><button class="tt" data-hid="${t.id}">${esc(t.title)}</button>${a>7?`<span class="ag">${ageTxt(a)}</span>`:""}<button class="o" data-hdo="${t.id}" aria-label="سويتها"></button></div>`};
+  const appRow=i=>{const s=state(i);return `<div class="it${s==="done"?" dn":s==="late"?" late":""}"><span class="tm n">${hm(i.hour,i.em)}</span><button class="tt" data-hid="${i.id}">${esc(i.title)}</button><button class="o" data-hok="${i.id}" aria-label="${s==="done"?"رجّعها":"سويتها"}"></button></div>`};
+  h+=`<section class="hcard hfolds">${row("fix","ثوابتي",fix.length?`${arN(fd)} من ${arN(fix.length)} اليوم`:"ماكو",fix.map(fixRow).join("")||`<p class="hem">ماكو ثوابت. ضيفها من «ضيف» ← ثابت</p>`)}
+    ${row("ras","براسي",ras.length?`${arN(ras.length)} ${ras.length===1?"شغلة":"شغلات"}`:"فاضية",ras.map(rasRow).join("")||`<p class="hem">ما براسك شي، ارتاح</p>`)}
+    ${row("app","مواعيد",app.length?`${arN(ad)} اليوم`:"ماكو",app.map(appRow).join("")||`<p class="hem">ماكو مواعيد اليوم</p>`)}</section>`;
+  $("#hassa").innerHTML=h}
+// كم مرة انسوّت هالأسبوع (من السبت لليوم d، ويا اليوم)
+function wkCount(t,d){let n=0;for(let x=add(d,-di(d));x<=d;x=add(x,1)){const l=S.log[t.id+"|"+x];if(l&&l.st==="done")n++}return n}
+// «كم مرة بالأسبوع»: تختفي إذا كملت العدد قبل اليوم (اللي انسوّت اليوم تبقى مشطوبة)
+function wkShow(t,d){const l=S.log[t.id+"|"+d];if(l&&l.st==="done")return true;let n=0;for(let x=add(d,-di(d));x<d;x=add(x,1)){const g=S.log[t.id+"|"+x];if(g&&g.st==="done")n++}return n<(t.wk||3)}
+const findT=id=>S.tasks.find(t=>t.id===id);
+const itemOf=id=>{const t=findT(id);if(!t)return null;const d=t.rep==="none"&&t.date<today()?t.date:today();return itemsOn(d).find(i=>i.id===id)||null};
+function hDone(id){const t=findT(id);if(!t)return;
+  if(t.rep==="none"){t.st="done";t.date=t.date<today()?today():t.date;t.e=nowM();save()}
+  else{const it=itemOf(id);if(it)setI(it,{st:"done",e:nowM()})}
+  render();toast("عاشت ايدك ✓");
+  const F=itemsOn(today()).filter(i=>i.rep!=="none");if(t.rep!=="none"&&F.length&&F.every(i=>i.st==="done"))btReact("party","سويت كل ثوابتك اليوم، الله يتقبّل",9000);else btDone()}
+document.addEventListener("click",e=>{if(ORG()||e.target.closest("#sheet"))return;
+  const q=s=>e.target.closest(s);let b;
+  if(q("[data-hseen]")){S.cfg.hSeen=1;save();render();return}
+  if(q("[data-hdemo]"))return $("#demo").click();
+  if(b=q("[data-hfold]")){const k=b.dataset.hfold;hOpen=hOpen===k?"":k;render();return}
+  if(b=q("[data-hok]")){const it=itemOf(b.dataset.hok);if(!it)return;if(it.st==="done"){setI(it,{st:"todo",s:null,e:null});render()}else hDone(it.id);return}
+  if(b=q("[data-hdo]"))return hDone(b.dataset.hdo);
+  if(b=q("[data-hlater]")){const n=rasList().length;if(n<2)return toast("ما عندك غيرها براسك");hSkip.add(b.dataset.hlater);render();return}
+  if(b=q("[data-hdel]")){const t=findT(b.dataset.hdel);if(!t)return;const i=S.tasks.indexOf(t);S.tasks.splice(i,1);save();render();toast("انشالت");return}
+  if(b=q("[data-hid]")){const it=itemOf(b.dataset.hid);if(it)hSheet(it)}},true);
+// ورقة الشغلة: الاسم، الملاحظة، الخانة، سويتها / شيلها. الساعة والدقيقة بس للموعد.
+function hSheet(it){const t=it.t,k=kindOf(t),T=today();
+  const dd=[...Array(4)].map((_,j)=>add(T,j));
+  show(`<div class="row hhead"><h3 id="hT">${esc(t.title)}</h3><button class="pill" id="hEd" style="flex:none">تعديل</button></div>
+  ${k==="ras"&&ageOf(t)>0?`<p class="meta">براسك ${ageTxt(ageOf(t))}</p>`:k==="fix"?`<p class="meta">${REP[t.rep]}${t.rep==="wk"?` · ${arN(t.wk||3)} مرات`:""}</p>`:""}
+  <textarea class="ta" id="tnote" maxlength="2000" style="min-height:70px;line-height:1.7" placeholder="ملاحظة (اختياري)">${esc(t.note||"")}</textarea>
+  <div class="sec"><h4>بأي خانة؟</h4>${sseg(KIND.map(([v,l])=>`<button class="pill" data-hk="${v}" aria-pressed="${k===v}">${l}</button>`))}</div>
+  ${k==="fix"?fixOpts(t.rep,t.wk||3):""}
+  ${k==="app"?`<div class="sec"><h4>شوكت؟</h4><div class="row" style="flex-wrap:wrap;gap:6px">${dd.map(d=>`<button class="pill" data-hd="${d}" aria-pressed="${t.date===d}">${dayName(d)}</button>`).join("")}</div>
+    <input type="time" class="inp htime" id="hTm" value="${pad(t.hour)}:${pad(t.min||0)}">
+    <div style="margin-top:8px">${sswi("bell",`ذكّرني قبل ${arN(S.cfg.remind||10)} دقايق`,t.remind!==false,'data-hrem')}</div></div>`:""}
+  ${window.YawmiAndroid&&YawmiAndroid.openZyara?duaSec(it):""}
+  <div class="hbtns">${it.st==="done"?`<button class="hp" id="hUn">رجّعها، ما سويتها</button>`:`<button class="hp w" id="hDo">سويتها</button>`}<button class="hp" id="hDel">شيلها</button></div>
+  <button class="close" data-x>سكّر</button>`);
+  const re=()=>{const n=itemOf(t.id);if(n){const y=sheet.scrollTop;hSheet(n);sheet.scrollTop=y}};
+  {const n=$("#tnote");n.oninput=()=>{t.note=n.value.slice(0,2000)||undefined;save()}}
+  $("#hEd").onclick=()=>{$("#hT").outerHTML=`<input class="inp" id="tt" maxlength="80" style="min-width:0;flex:1" value="${esc(t.title)}">`;$("#hEd").textContent="احفظ";const i=$("#tt");i.focus();i.select();
+    const go=()=>{const v=i.value.trim();if(!v)return i.focus();t.title=v.slice(0,80);save();render();re();toast("انحفظ ✓")};$("#hEd").onclick=go;i.onkeydown=ev=>{if(ev.key==="Enter")go()}};
+  {const tm=$("#hTm");if(tm)tm.onchange=()=>{const m=/^(\d\d):(\d\d)$/.exec(tm.value);if(!m)return;t.hour=+m[1];t.min=+m[2]||null;save();render()}}
+  $("#hDel").onclick=()=>{S.tasks=S.tasks.filter(x=>x.id!==t.id);save();hide();render();toast("انشالت")};
+  {const d=$("#hDo");if(d)d.onclick=()=>{hide();hDone(t.id)}}
+  {const u=$("#hUn");if(u)u.onclick=()=>{if(t.rep==="none"){t.st="todo";t.e=undefined;save()}else setI(it,{st:"todo",s:null,e:null});hide();render()}}
+  sheet.onclick=e=>{const q=s=>e.target.closest(s);let b;
+    if(b=q("[data-hk]")){const v=b.dataset.hk;if(v===k)return;
+      if(v==="ras"){t.rep="none";t.hour=null;t.min=undefined;if(t.date<T)t.date=T}
+      if(v==="fix"){t.rep="daily";t.date=T;t.st="todo"}
+      if(v==="app"){t.rep="none";if(t.date<T)t.date=T;if(t.hour==null){t.hour=(nowH()+1)%24;t.min=undefined}}
+      save();render();re();return}
+    if(b=q("[data-hrep]")){t.rep=b.dataset.hrep;if(t.rep==="wk"&&!t.wk)t.wk=3;save();render();re();return}
+    if(b=q("[data-hwk]")){t.wk=Math.max(1,Math.min(6,(t.wk||3)+ +b.dataset.hwk));save();render();re();return}
+    if(b=q("[data-hd]")){t.date=b.dataset.hd;save();render();re();return}
+    if(q("[data-hrem]")){t.remind=t.remind===false;if(t.remind)askNotif();save();render();re();return}
+    const dq=q("[data-dua]");if(dq){t.dua=dq.dataset.dua||undefined;save();re();return}
+    const dg=q("[data-dgo]");if(dg){openDua(duaOf(it),dg.dataset.dgo==="play");return}}}
+const fixOpts=(rep,wk)=>`<div class="sec"><h4>شكد تتكرر؟</h4><div class="row" style="flex-wrap:wrap;gap:6px">${[["daily","كل يوم"],["work","أيام الدوام"],["wk","كم مرة بالأسبوع"]].map(([v,l])=>`<button class="pill" data-hrep="${v}" aria-pressed="${rep===v}">${l}</button>`).join("")}</div>
+  ${rep==="wk"?`<div class="row hctr"><span class="meta">بالأسبوع</span><button class="pill" data-hwk="-1" aria-label="أقل">−</button><b class="n">${wk}</b><button class="pill" data-hwk="1" aria-label="أكثر">+</button></div>`:""}</div>`;
+// ورقة «ضيف»: براسي (المختار من البداية) / ثابت / موعد
+function hAdd(o={}){const T=today(),st={kind:o.kind||"ras",day:o.day&&o.day>T?o.day:T,rep:"daily",wk:3,ap:null,hr:null,rem:true,text:o.text||""};
+  const nh=(nowH()+1)%24;
+  const draw=()=>{const k=st.kind,dd=[...Array(4)].map((_,j)=>add(T,j));
+    show(`<h3>شنو براسك؟</h3>
+    <div class="hinp"><textarea class="ta" id="ta" placeholder="مثلاً: أجيب فواكه">${esc(st.text)}</textarea>${SR?`<button class="hmic" id="talk" aria-label="احچيها">${HI.mic}</button>`:""}</div>
+    ${sseg(KIND.map(([v,l])=>`<button class="pill" data-ak="${v}" aria-pressed="${k===v}">${l}</button>`))}
+    ${k==="ras"?sseg([[T,"اليوم"],[add(T,1),"باچر"]].map(([d,l])=>`<button class="pill" data-ad="${d}" aria-pressed="${st.day===d}">${l}</button>`)):""}
+    ${k==="fix"?fixOpts(st.rep,st.wk)+`<div class="sec"><h4>ساعة تقريبية (اختياري)</h4><div class="row" style="flex-wrap:wrap;gap:6px">${[[8,"الصبح"],[13,"الظهر"],[18,"المسا"]].map(([h,l])=>`<button class="pill" data-ahr="${h}" aria-pressed="${st.hr===h}">${l}</button>`).join("")}</div></div>`:""}
+    ${k==="app"?`<div class="sec"><h4>شوكت؟</h4><div class="row" style="flex-wrap:wrap;gap:6px">${dd.map(d=>`<button class="pill" data-ad="${d}" aria-pressed="${st.day===d}">${dayName(d)}</button>`).join("")}</div>
+      <input type="time" class="inp htime" id="hTm" value="${st.ap||pad(nh)+":00"}">
+      <div style="margin-top:8px">${sswi("bell",`ذكّرني قبل ${arN(S.cfg.remind||10)} دقايق`,st.rem,'data-arem')}</div></div>`:""}
+    <button class="hp w big" id="sv">حفظ</button>`);
+    const ta=$("#ta");ta.oninput=()=>{st.text=ta.value};if(!o.voice)setTimeout(()=>ta.focus(),60);
+    {const tm=$("#hTm");if(tm)tm.onchange=()=>{st.ap=tm.value}}
+    $("#sv").onclick=save_;
+    const tk=$("#talk");if(tk)tk.onclick=()=>{if(rec){stopMic();tk.classList.remove("on");return}
+      try{rec=new SR();rec.lang="ar-IQ";rec.continuous=true;
+        rec.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++)if(e.results[i].isFinal){ta.value=(ta.value?ta.value.replace(/\s*$/,"")+"\n":"")+e.results[i][0].transcript.trim();st.text=ta.value}};
+        rec.onerror=()=>{stopMic();tk.classList.remove("on");toast("ما گدرت أسمعك هنا، اكتبها")};rec.onend=()=>{rec=null;tk.classList.remove("on")};rec.start();tk.classList.add("on")}catch(e){toast("ما گدرت أسمعك هنا، اكتبها")}};
+    if(o.voice&&tk){o.voice=false;tk.click()}
+    sheet.onclick=e=>{const q=s=>e.target.closest(s);let b;
+      if(b=q("[data-ak]")){st.kind=b.dataset.ak;if(st.kind==="ras"&&st.day>add(T,1))st.day=T;draw();return}
+      if(b=q("[data-ad]")){st.day=b.dataset.ad;draw();return}
+      if(b=q("[data-hrep]")){st.rep=b.dataset.hrep;draw();return}
+      if(b=q("[data-hwk]")){st.wk=Math.max(1,Math.min(6,st.wk+ +b.dataset.hwk));draw();return}
+      if(b=q("[data-ahr]")){const h=+b.dataset.ahr;st.hr=st.hr===h?null:h;draw();return}
+      if(q("[data-arem]")){st.rem=!st.rem;draw();return}}};
+  const save_=()=>{const L=st.text.split(/\n|،/).map(x=>x.trim()).filter(Boolean);if(!L.length)return $("#ta").focus();
+    clearDemo();const k=st.kind;let hr=null,mn;
+    if(k==="app"){const m=/^(\d\d):(\d\d)$/.exec(st.ap||pad(nh)+":00");hr=+m[1];mn=+m[2]||undefined}
+    L.forEach(x=>{const t={id:uid(),title:x.slice(0,80),date:k==="fix"?T:st.day,hour:k==="app"?hr:k==="fix"?st.hr:null,rep:k==="fix"?st.rep:"none",remind:k==="app"?st.rem:true,st:"todo"};
+      if(k==="app"&&mn)t.min=mn;if(k==="fix"&&st.rep==="wk")t.wk=st.wk;S.tasks.push(t)});
+    if(k==="app"&&st.rem)askNotif();
+    stopMic();save();hide();hOpen=k==="ras"?hOpen:k;render();
+    toast(k==="ras"?`✓ ${L.length>1?arN(L.length)+" شغلات":L[0].slice(0,30)}، براسك${st.day!==T?" باچر":""}`:k==="fix"?"انضافت لثوابتك ✓":`انحط الموعد ${dayName(st.day)} الساعة ${hm12(hr*60+(mn||0))} ✓`)};
+  draw()}
 /* ---------- تذكير قبل المهمة (إشعار بالجهاز، والتلي يذكّر من السيرفر) ---------- */
 const fired=new Set();
 setInterval(()=>{const m=nowM(),r=S.cfg.remind;
