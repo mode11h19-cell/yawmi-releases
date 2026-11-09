@@ -1,0 +1,157 @@
+/* «زاد» (zad.js): زيارات وأدعية + مجالس. نفس رموز المونو (mono.css). الأحمر بس للخط الأحمر بصفحة القراءة.
+   الصوت والكتابة والعلامات كلها بالتلفون (YawmiZad)، هنا بس الرسم. التصميم: docs/zad/. */
+:root,:root[data-theme="light"]{--zpaper:#fbfaf7;--zink:#1b1b1b;--zhl:rgba(0,0,0,.09);--zred:#e5484d}
+:root[data-theme="dark"]{--zpaper:#141416;--zink:#e9e9ea;--zhl:rgba(255,255,255,.16);--zred:#e5484d}
+#zdPg,#zdRd,#zdMk{position:fixed;inset:0;width:100%;height:100dvh;z-index:19;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;color:var(--fg)}
+#zdPg{background:var(--wall,var(--bg));padding:calc(var(--sat) + 22px) calc(env(safe-area-inset-right,0px) + 16px) calc(var(--sab) + 130px) calc(env(safe-area-inset-left,0px) + 16px)}
+#zdPg[hidden],#zdRd[hidden],#zdMk[hidden]{display:none}
+body.zd-on{overflow:hidden}
+body.zd-on .y-isl{display:none}
+html:has(body.zd-on){overscroll-behavior:none}
+.zd-n{font-family:Inter,system-ui,sans-serif;direction:ltr;unicode-bidi:isolate}
+.zd-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}
+.zd-top h2{font:600 30px/1.2 "IBM Plex Sans Arabic",system-ui,sans-serif;letter-spacing:-.3px}
+.zd-top h2.s{font-size:23px}
+.zd-tb{display:flex;gap:8px;align-items:center;flex:none}
+.zd-add{height:38px;padding:0 14px;border-radius:19px;background:var(--fg);color:var(--inv);font-size:13px;font-weight:500}
+.zd-pdf{height:38px;padding:0 12px;border-radius:19px;border:1px solid var(--gb);background:var(--gl);font:500 12px Inter,system-ui,sans-serif;display:flex;align-items:center;gap:5px}
+.zd-back{font-size:14px;color:var(--f2);padding:6px 0;margin-bottom:4px}
+/* «كمّل من وين وقفت» */
+.zd-cont{position:relative;border-radius:22px;background:var(--fg);color:var(--inv);padding:16px;display:flex;flex-direction:column;gap:10px;cursor:pointer;margin-bottom:16px;text-align:right;width:100%}
+.zd-cont small{font-size:11.5px;opacity:.6}.zd-cont b{font-size:17px;font-weight:600;line-height:1.35;padding-left:34px}
+.zd-cont b .zd-n{font-weight:200;opacity:.6;margin-left:6px}
+.zd-cont .r{display:flex;align-items:center;gap:12px}
+.zd-cont .pl{width:46px;height:46px;border-radius:50%;background:var(--inv);color:var(--fg);display:grid;place-items:center;flex:none}
+.zd-cont .pl svg{width:18px;height:18px}
+.zd-cont .bar{direction:ltr;height:4px;border-radius:2px;background:color-mix(in srgb,var(--inv) 20%,transparent);overflow:hidden}.zd-cont .bar i{display:block;height:100%;background:var(--inv)}
+.zd-cont .t{font:400 12px Inter,system-ui,sans-serif;direction:ltr;opacity:.75;display:flex;justify-content:space-between;margin-top:6px}
+.zd-x{position:absolute;z-index:3;top:10px;left:10px;width:30px;height:30px;border-radius:50%;background:color-mix(in srgb,var(--inv) 12%,transparent);color:var(--inv);font-size:12px;opacity:.75;display:grid;place-items:center}
+/* القسمين */
+.zd-secs{margin-top:8px}
+.zd-sec{display:flex;justify-content:space-between;align-items:center;width:100%;height:68px;border-bottom:1px solid var(--gb);color:var(--fg);text-align:right}
+.zd-sec b{font-size:20px;font-weight:600}.zd-sec span{font-size:20px;color:var(--f3)}
+/* القائمة */
+.zd-lbl{font-size:12px;color:var(--f2);margin:4px 2px 0;display:flex;justify-content:space-between}
+.zd-lec{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:var(--gl);border:1px solid var(--gb);margin-top:8px;cursor:pointer;position:relative;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.zd-lec .no{font:200 30px/1 Inter,system-ui,sans-serif;width:34px;text-align:center;flex:none;color:var(--f2)}
+.zd-lec.live{border:1.5px solid var(--fg)}.zd-lec.live .no{color:var(--fg)}
+.zd-lec .tx{flex:1;min-width:0}.zd-lec .tx b{display:block;font-weight:500;font-size:14px;line-height:1.35}
+.zd-lec .tx small{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--f2);margin-top:4px}
+.zd-lec .pb{direction:ltr;height:3px;border-radius:2px;background:var(--f4);margin-top:6px;overflow:hidden}.zd-lec .pb i{display:block;height:100%;background:var(--fg)}
+.zd-lec .st{font-size:10.5px;padding:2px 8px;border-radius:99px;border:1px solid var(--f3);white-space:nowrap;flex:none}
+.zd-lec .st.done{background:var(--fg);color:var(--inv);border-color:transparent}
+.zd-lec.drag{z-index:5;box-shadow:0 14px 30px rgba(0,0,0,.35);border-color:var(--fg);transition:none}
+.zd-lec.mv{transition:transform .2s cubic-bezier(.2,.8,.2,1)}
+.zd-srch{display:flex;align-items:center;gap:8px;height:44px;border-radius:14px;background:var(--gl);border:1px solid var(--gb);padding:0 12px;margin:2px 0 10px;color:var(--f2)}
+.zd-srch svg{width:17px;height:17px;flex:none}
+.zd-srch input{flex:1;min-width:0;border:0;background:none;outline:0;font:inherit;font-size:16px;color:var(--fg)}
+.zd-srch input::-webkit-search-cancel-button{display:none}
+.zd-hit{display:block;width:100%;text-align:right;padding:12px;border-radius:14px;background:var(--gl);border:1px solid var(--gb);margin-top:8px}
+.zd-hit small{display:block;font-size:11px;color:var(--f2)}
+.zd-hit p{font:400 14.5px/1.9 "Noto Naskh Arabic",serif;margin-top:2px;color:var(--fg)}
+.zd-hit mark{background:var(--zhl);color:inherit;border-radius:3px;padding:0 2px}
+.zd-note{font-size:12px;color:var(--f3);margin-top:12px;line-height:1.7;text-align:center}
+.zd-empty{text-align:center;padding:40px 18px;color:var(--f2);font-size:13px;line-height:1.8}
+/* السماع */
+.zd-h3{font-size:19px;font-weight:600;margin-top:8px;line-height:1.35;text-align:right;width:100%;display:block;color:var(--fg)}
+.zd-h3 .zd-n{font-weight:200;color:var(--f2);margin-left:6px}
+.zd-scrub{direction:ltr;position:relative;height:44px;margin-top:12px;cursor:pointer;touch-action:none}
+.zd-scrub .tr{position:absolute;top:20px;left:0;right:0;height:4px;border-radius:2px;background:var(--f4)}
+.zd-scrub .fill{position:absolute;top:20px;left:0;height:4px;border-radius:2px;background:var(--fg)}
+.zd-scrub .knob{position:absolute;top:13px;width:18px;height:18px;border-radius:50%;background:var(--fg);transform:translateX(-50%);box-shadow:0 0 0 4px var(--bg)}
+.zd-scrub .bm{position:absolute;top:6px;width:2px;height:12px;background:var(--fg);transform:translateX(-50%)}
+.zd-scrub .bm::after{content:"";position:absolute;top:-6px;left:50%;width:7px;height:7px;background:var(--fg);transform:translateX(-50%) rotate(45deg)}
+.zd-times{display:flex;justify-content:space-between;font:400 12px Inter,system-ui,sans-serif;color:var(--f2);direction:ltr}
+.zd-ctrl{display:flex;justify-content:space-between;align-items:center;margin:10px 0}
+.zd-ctrl button{height:42px;min-width:42px;border-radius:21px;font:400 12px Inter,system-ui,sans-serif;border:1px solid var(--gb);background:var(--gl);color:var(--fg)}
+.zd-ctrl .pp{width:60px;height:60px;border-radius:50%;background:var(--fg);color:var(--inv);border:0;display:grid;place-items:center}
+.zd-ctrl .pp svg{width:22px;height:22px}
+.zd-ctrl .star{border-color:var(--fg);padding:0 12px;font:500 12px "IBM Plex Sans Arabic",system-ui,sans-serif}
+.zd-bms{display:flex;gap:6px;overflow-x:auto;margin:0 -16px;padding:2px 16px 8px;scrollbar-width:none}.zd-bms::-webkit-scrollbar{display:none}
+.zd-bms button{flex:none;height:34px;padding:0 12px;border-radius:99px;border:1px solid var(--gb);background:var(--gl);font-size:12px;display:flex;align-items:center;gap:6px;color:var(--fg);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.zd-bms button .zd-n{font-size:11px;color:var(--f2)}
+/* كارت «📖 الكتابة» */
+.zd-book{margin-top:16px;border-radius:20px;background:var(--zpaper);border:1px solid var(--gb);padding:16px;display:block;width:100%;text-align:right;color:var(--zink)}
+.zd-book .hh{display:flex;justify-content:space-between;align-items:center;font:500 13px "IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--f2)}
+.zd-book .hh b{color:var(--fg);font-size:15px}
+.zd-book p{font:400 15px/2 "Noto Naskh Arabic",serif;margin-top:8px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line}
+.zd-book .meta{display:flex;gap:12px;font-size:11.5px;color:var(--f2);margin-top:10px}
+.zd-book .meta i{width:12px;height:2px;background:var(--zred);display:inline-block;vertical-align:middle;margin-left:4px}
+.zd-book.no p{color:var(--f3)}
+/* كتابة الزيارة/الدعاء المضافة: أميري، والسطر الحالي يتظلّل إذا بيها أوقات [12:40] */
+.zd-rt{display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;font-size:11.5px;color:var(--f2);border-top:1px solid var(--gb);margin-top:14px}
+.zd-rt .fs button{width:32px;height:30px;border-radius:8px;border:1px solid var(--gb);margin-right:4px;font-size:12px;color:var(--fg)}
+.zd-duaa .zd-para{font:400 calc(var(--zfz,17px) + 3px)/2.1 Amiri,"Noto Naskh Arabic",serif;text-align:center;color:var(--fg);padding:6px 8px;border-radius:10px;white-space:pre-line;transition:color .3s,background .3s}
+.zd-duaa.sync .zd-para{color:var(--f3);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.zd-duaa.sync .zd-para.past{color:var(--f2)}.zd-duaa.sync .zd-para.cur{color:var(--fg);background:var(--f4)}
+.zd-del{margin-top:22px;width:100%;height:46px;border-radius:14px;color:var(--f2);font-size:13.5px}
+/* صفحة القراءة */
+/* القراءة مثل الكتاب: الشريط السفلي والمايك يختفون */
+body.zd-rdo .dock,body.zd-rdo .y-micb{display:none}
+#zdRd{background:var(--zpaper);color:var(--zink);display:flex;flex-direction:column;overflow:hidden}
+.zd-rbar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:calc(var(--sat) + 14px) 14px 8px;border-bottom:1px solid var(--gb);background:var(--zpaper);flex:none}
+.zd-rbar .r{display:flex;gap:6px}.zd-rbar .r button{height:34px;min-width:34px;padding:0 10px;border-radius:10px;border:1px solid var(--gb);font-size:12px;color:var(--fg)}
+.zd-page{flex:1;overflow-y:auto;padding:18px 22px calc(var(--sab) + 60px);-webkit-user-select:text;user-select:text;overscroll-behavior:contain}
+.zd-page h2{font:600 21px/1.6 "Noto Naskh Arabic",serif;text-align:center}
+.zd-page .sub{text-align:center;font-size:11.5px;color:var(--f2);margin:2px 0 16px}
+.zd-txt{font:400 var(--zfz,17px)/2.05 "Noto Naskh Arabic",serif;text-align:justify;white-space:pre-line;word-wrap:break-word}
+.zd-txt .u{text-decoration:underline;text-decoration-color:var(--zred);text-decoration-thickness:2px;text-underline-offset:6px}
+.zd-txt .h{background:var(--zhl);border-radius:3px}
+.zd-txt .s{border-bottom:1.5px solid var(--fg)}
+.zd-txt .sb::before{content:"★";font:400 11px "IBM Plex Sans Arabic",system-ui,sans-serif;vertical-align:super;margin-inline-end:2px}
+.zd-txt .n{border-bottom:1.5px dashed var(--fg);cursor:pointer}
+.zd-txt .ne::after{content:"✎";font-size:10px;vertical-align:super;margin-inline-start:2px;color:var(--fg)}
+.zd-txt .q{background:var(--zhl);transition:background 1.6s}
+.zd-txt .q.off{background:transparent}
+.zd-here::before{content:"وصلت هنا";display:inline-block;font:500 10.5px/20px "IBM Plex Sans Arabic",system-ui,sans-serif;background:var(--fg);color:var(--zpaper);border-radius:99px;padding:0 8px;margin:0 4px;vertical-align:middle;white-space:nowrap}
+.zd-endp{text-align:center;font:400 11px Inter,system-ui,sans-serif;color:var(--f3);margin-top:20px}
+/* شريط التعليم */
+.zd-tbar{position:fixed;z-index:70;display:flex;gap:2px;padding:4px;border-radius:14px;background:var(--fg);color:var(--inv);box-shadow:0 8px 24px rgba(0,0,0,.35);white-space:nowrap}
+.zd-tbar[hidden]{display:none}
+.zd-tbar button{height:38px;padding:0 10px;border-radius:10px;font-size:12.5px;display:flex;align-items:center;gap:4px;color:inherit}
+.zd-tbar button:active{background:color-mix(in srgb,var(--inv) 15%,transparent)}
+.zd-tbar .ru{width:14px;height:2px;background:var(--zred);display:inline-block}
+.zd-q{display:block;font:400 14px/1.8 "Noto Naskh Arabic",serif;color:var(--f2);border-right:2px solid var(--fg);padding-right:10px;margin:4px 0 10px}
+.zd-ta{width:100%;min-height:96px;border-radius:14px;background:var(--gl);border:1px solid var(--gb);padding:10px 12px;font:inherit;font-size:16px;color:var(--fg);outline:0;resize:vertical;line-height:1.7}
+/* «علاماتي» */
+#zdMk{background:var(--wall,var(--bg));z-index:21;padding:calc(var(--sat) + 22px) 16px calc(var(--sab) + 40px)}
+.zd-fl{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}.zd-fl button{height:34px;padding:0 13px;border-radius:99px;border:1px solid var(--gb);font-size:12.5px;color:var(--fg)}
+.zd-fl button[aria-pressed=true]{background:var(--fg);color:var(--inv);border-color:transparent}
+.zd-mi{display:block;width:100%;text-align:right;padding:12px;border-radius:14px;background:var(--gl);border:1px solid var(--gb);margin-top:8px;color:var(--fg)}
+.zd-mi small{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--f2)}
+.zd-mi small .k i{width:12px;height:2px;background:var(--zred);display:inline-block;vertical-align:middle;margin-left:4px}
+.zd-mi p{font:400 14.5px/1.9 "Noto Naskh Arabic",serif;margin-top:4px}
+.zd-mi .nt{font-size:13px;margin-top:6px;padding-top:6px;border-top:1px dashed var(--gb)}
+/* ورقة الإضافة */
+.zd-chips{display:flex;gap:6px;margin-top:8px}.zd-chips button{flex:1;height:42px;border-radius:12px;border:1px solid var(--gb);background:var(--gl);font-size:13.5px;color:var(--fg)}
+.zd-chips button[aria-pressed=true]{background:var(--fg);color:var(--inv);border-color:transparent}
+.zd-file{display:flex;align-items:center;gap:10px;min-height:58px;border-radius:14px;border:1.5px dashed var(--f3);padding:8px 14px;margin-top:8px;font-size:13.5px;color:var(--f2);width:100%;text-align:right}
+.zd-file.zip,.zd-file.ok{border-style:solid;border-color:var(--fg);color:var(--fg)}.zd-file i{font-style:normal;font-size:18px;flex:none}
+.zd-hint{font-size:11.5px;color:var(--f3);margin-top:6px;line-height:1.6}
+.zd-sl{font-size:12px;color:var(--f2);margin:14px 2px 0}
+.zd-lnk{font-size:12.5px;color:var(--f2);padding:8px 2px;text-decoration:underline;text-underline-offset:4px}
+/* الإعدادات: «أسماء الأقسام» بآخرها، زر صغير */
+.zd-nmw{text-align:center;margin-top:18px}
+.zd-nmb{font-size:12px;color:var(--f3);padding:8px}
+.zd-nm{text-align:right;margin-top:6px}
+.zd-nm[hidden]{display:none}
+.zd-nm p{font-size:11.5px;color:var(--f3);margin-top:6px;line-height:1.6;text-align:center}
+#mZyara.on{color:var(--fg)}
+.zd-in{position:relative;margin-top:8px}
+.zd-in input,.zd-in textarea{width:100%;height:54px;border-radius:14px;border:1px solid var(--gb);background:var(--gl);padding:20px 14px 4px;font:inherit;font-size:16px;color:var(--fg);outline:none}
+.zd-in textarea{height:auto;min-height:120px;padding-top:24px;resize:vertical;line-height:1.7}
+.zd-in input:focus,.zd-in textarea:focus{border-color:var(--fg)}
+.zd-in label{position:absolute;right:14px;top:16px;font-size:13px;color:var(--f2);pointer-events:none;transition:all .25s cubic-bezier(.2,.8,.2,1)}
+.zd-in input:focus+label,.zd-in input:not(:placeholder-shown)+label,.zd-in textarea:focus+label,.zd-in textarea:not(:placeholder-shown)+label{top:6px;font-size:10.5px}
+.zd-sv{margin-top:16px;width:100%;height:52px;border-radius:16px;background:var(--fg);color:var(--inv);font-weight:600;font-size:15px}
+/* v1.26: «احذف» زيارة، «رجّع الزيارات المحذوفة»، والإعدادات «الودجتات» (widgets.js) */
+.zd-dmsg{font-size:13px;color:var(--f2);line-height:1.7;margin-top:6px}
+.zd-unh{display:block;margin:2px auto 0}
+.yw-b{display:block;margin:4px auto 0}
+.yw-m{margin:-4px 0 10px}
+.yw-r{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gb)}
+.yw-r img{width:74px;height:46px;object-fit:contain;flex:none;border-radius:8px}
+.yw-r .t{flex:1;display:flex;flex-direction:column;gap:2px;text-align:right}.yw-r b{font-size:15px;font-weight:500}.yw-r small{font-size:12px;color:var(--f3)}
+.yw-s{display:flex;flex:none;padding:6px 0;background:transparent}
+.yw-s[aria-pressed="true"] .swi{background:var(--fg)}
+.yw-s[aria-pressed="true"] .swi::after{right:19px;background:var(--inv);opacity:1}
+.yw-ask{color:var(--fg)!important;padding:8px 0;font-size:12.5px}

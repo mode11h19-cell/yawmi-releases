@@ -1,0 +1,75 @@
+/* «هسه»: الواجهة الجديدة. تشتغل بس لما body.hassa (يعني «وضع التنظيم» مطفي) */
+body:not(.hassa) #mNow,body:not(.hassa) #hassa{display:none}
+body.hassa #days,body.hassa #nowWrap,body.hassa #jar,body.hassa #trays,body.hassa .hd .logo,body.hassa #mDay,body.hassa #mWeek{display:none}
+body.hassa #hassa{display:flex;flex-direction:column;gap:12px}
+/* الهيدر: ILO صغير يم التحية وجملته تحتها */
+body.hassa .hd>div:first-child{min-width:0;flex:1}
+body.hassa .hd .bt-wrap{position:static;flex:none;width:52px;height:60px;border-radius:16px;margin:-6px 0}
+body.hassa .hsay{font-size:12.5px;color:var(--f2);margin-top:2px;min-height:18px}
+body.hassa .hsay::before{content:"› "}
+/* الدوك: هسه / زيارات / منبه / ضيف */
+body.hassa #mNow{order:1;color:var(--fg)}body.hassa #mNow .k{outline:1px solid var(--f3)}
+body.hassa #mZyara{order:2}body.hassa #mCards{order:3}body.hassa #mAdd{order:4}
+/* الكارتات */
+/* بلا زجاج (backdrop-filter): الخلفية ورا الكارتات ناعمة فالشكل نفسه، والزجاج يبقى بس للشريط والجزيرة والشيت */
+.hcard{background:var(--gl);border:1px solid var(--gb);border-radius:22px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.hcard .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hcard .lab{font-size:12px;color:var(--f2);display:flex;align-items:center;gap:7px}
+.hcard .lab i{width:7px;height:7px;border-radius:50%;background:var(--fg)}
+.hcard .nt{font-size:18px;font-weight:500;line-height:1.4}
+.hcard .sub{font-size:12.5px;color:var(--f2)}
+.n{font-family:var(--num);direction:ltr;unicode-bidi:isolate;font-variant-numeric:tabular-nums}
+.hone{gap:12px}
+.hone .big{font:inherit;font-size:27px;font-weight:300;line-height:1.3;letter-spacing:-.2px;text-align:start;background:none;border:0;color:var(--fg);padding:0}
+.hempty{align-items:center;text-align:center;padding:26px 16px}
+.hbtns{display:flex;gap:8px}.hbtns .hp{flex:1}
+.hp{min-height:46px;padding:10px 12px;border-radius:16px;font:inherit;font-size:14px;font-weight:500;background:var(--gl);border:1px solid var(--gb);color:var(--fg);display:grid;place-items:center}
+.hp.w{background:var(--fg);color:var(--inv);border-color:var(--fg)}
+.hp.sm{min-height:36px;padding:6px 14px;font-size:12.5px;border-radius:14px}
+.hp.big{width:100%;min-height:50px;font-size:15px}
+.hp:active{opacity:.75}
+/* الخانات الثلاث المطوية */
+.hfolds{padding:0;gap:0;overflow:hidden}
+.fold{display:flex;align-items:center;gap:10px;min-height:52px;padding:0 16px;font:inherit;font-size:15px;color:var(--fg);background:none;border:0;border-bottom:1px solid var(--f4);width:100%;text-align:start}
+.fold:last-child{border-bottom:0}
+.fold .k{margin-inline-start:auto;color:var(--f2);font-size:13px;display:flex;align-items:center;gap:8px}
+.fold .k::after{content:"‹";font-size:18px;color:var(--f3);transform:rotate(90deg);line-height:1}
+.fold.op .k::after{transform:rotate(-90deg)}
+.hlist{border-bottom:1px solid var(--f4)}.hlist:last-child{border-bottom:0}
+.it{display:flex;align-items:center;gap:10px;min-height:50px;padding:0 16px;border-top:1px solid var(--f4);font-size:15px}
+.it .tt{flex:1;min-width:0;font:inherit;color:inherit;background:none;border:0;text-align:start;padding:12px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.it .o{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--f3);background:none;flex:none;display:grid;place-items:center;position:relative}
+.it .o::before{content:"";position:absolute;inset:-10px}
+.it.dn{color:var(--f3)}.it.dn .tt{text-decoration:line-through}
+.it.dn .o{background:var(--f3);border-color:transparent}
+.it.dn .o::after{content:"";width:9px;height:5px;border:solid var(--inv);border-width:0 0 2px 2px;transform:rotate(-45deg) translate(1px,-1px)}
+.it.old .tt{opacity:.55}
+.it .ag{font-size:11.5px;color:var(--f2);flex:none}
+.it .tm{font-weight:200;font-size:20px;width:60px;text-align:right;flex:none}
+.it.late{color:var(--red)}.it.late .o{border-color:var(--red)}
+.dots{display:flex;gap:4px;flex:none}.dots i{width:8px;height:8px;border-radius:50%;border:1.4px solid var(--fg)}.dots i.f{background:var(--fg)}
+.it.dn .dots i{border-color:var(--f3)}.it.dn .dots i.f{background:var(--f3)}
+.hem{padding:14px 16px;font-size:13px;color:var(--f2);border-top:1px solid var(--f4)}
+/* أول مرة بعد التحديث */
+.hnote{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;border:1px solid var(--f3);font-size:13.5px}
+.hnote svg{width:18px;height:18px;flex:none}
+.hnote button{margin-inline-start:auto;background:none;border:0;font:inherit;color:var(--f2);min-height:36px;padding:0 6px}
+/* الأوراق */
+.hinp{position:relative}
+.hinp .ta{min-height:84px;font-size:16px;padding-inline-end:56px}
+.hmic{position:absolute;top:12px;inset-inline-end:10px;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--f3);background:none;color:var(--fg)}
+.hmic svg{width:18px;height:18px}
+.hmic.on{background:var(--fg);color:var(--inv);border-color:var(--fg);animation:mono-pl 1.4s ease-in-out infinite}
+.htime{font-family:var(--num);font-size:34px;font-weight:200;text-align:center;direction:ltr;margin-top:10px;width:100%;min-height:64px}
+.hctr{display:flex;align-items:center;gap:12px;margin-top:10px}
+.hctr .meta{flex:1}.hctr .pill{width:44px;flex:none;font-size:18px}.hctr b{font-weight:200;font-size:28px;min-width:22px;text-align:center}
+.hhead{display:flex;align-items:center;gap:10px}.hhead h3{flex:1;min-width:0}
+.sorg{padding:4px 14px 12px;padding-inline-start:56px}
+body.hassa .hd{align-items:flex-start}
+body.hassa .hd h1{font-size:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.hassa .hd #dl{font-size:11.5px;color:var(--f3);margin-top:2px}
+body.hassa .hd>div:first-child>div{min-width:0}
+.hcard .hp.sm{flex:none;width:auto}
+body.hassa .hbs{flex-wrap:nowrap;gap:6px;flex:none}
+body.hassa .hbs .hb{width:42px;min-width:42px;height:42px;padding:0}
+body.hassa #demo{display:none}
