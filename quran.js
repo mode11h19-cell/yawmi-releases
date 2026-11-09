@@ -1,34 +1,33 @@
-/* «القرآن الكريم» داخل «زاد» (docs/quran/README.md): ٦٠٤ صفحة بنص Tanzil (Uthmani 1.1) وخط Amiri Quran.
-   - quran/q.json: نص Tanzil كما هو بلا أي تغيير (t)، وأول آية بكل صفحة (p) وبكل جزء (j) من quran-data.xml، والسور (s)
-     وبسملة كل سورة (b). quran/amiri-quran.ttf: الخط الوحيد. الاثنين داخل الـAPK (ينخدمن من التلفون): بلا نت من أول مرة.
-   - كل صفحة بيها آياتها بالضبط، justify وآخر سطر بالنص. حجم الخط يتحسب لكل صفحة لحالها (fit) حتى تملي الإطار.
+/* «القرآن الكريم» داخل «زاد» (docs/quran/README.md): مصحف المدينة النبوية الحقيقي، ٦٠٤ صفحة، ١٥ سطر.
+   كل صفحة مكتوبة بخطها (QCF V2، مجمع الملك فهد ١٤٢١هـ) وترتيب سطورها من QUL: نفس الورقي سطر بسطر، بس كتابة مو صورة.
+   - quran/q.json: السطور ورموز الكلمات والفهرس (بالـAPK، ينخدم من التلفون). quran/t.json: نفس الكلمات بنص حفص،
+     تبين لحد ما ينزل خط الصفحة (احتياط).
+   - الخطوط: بالتطبيق من التلفون (Quran.java ينزلها أول مرة من Quran Foundation ويحفظها)، بالمتصفح من Quran Foundation
+     مباشرة، والاحتياط نسختنا على GitHub.
+   - الشكل (Nov 9): ورق كريمي، فوق اسم السورة برقمها، تحت الجزء ورقم الصفحة بإطار بيضوي والحزب.
    - «شريط القراءة» {page, a}: وحدة بكل التطبيق والودجتين. ينحفظ لحاله لما تطلع.
    - بالذاكرة بس ٣ صفحات (الحالية واللي جنبها)؛ الباقي فارغ.
-   zad.js يناديها: YQ.init(api)، YQ.open(page)، YQ.cardHtml()، YQ.close(). app.js: YQ.srcHtml() بالإعدادات. */
+   zad.js يناديها: YQ.init(api)، YQ.open(page)، YQ.cardHtml()، YQ.close(). */
 (function(){
 const Q=()=>window.YawmiQuran;
 const $=(s,r)=>(r||document).querySelector(s),$$=(s,r)=>[...(r||document).querySelectorAll(s)];
 const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const ar=n=>String(n).replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
 const buzz=p=>{const m=window.YM;if(m)m.haptic(p);else try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+const QF="https://verses.quran.foundation/fonts/quran/hafs/v2/woff2/",GH="https://raw.githubusercontent.com/mode11h19-cell/yawmi-releases/main/quran/v2/";
 const GOALS=[[0,"بلا"],[1,"صفحة"],[5,"ربع جزء"],[10,"نص جزء"],[20,"جزء"]];
 const COUNT_MS=15000; // الصفحة تنحسب لما تقلبها بعد ١٥ ثانية عليها
 
 let skipPop=0; // الرجوع اللي سويناه احنا (زر «زاد» فوق): مو زر الرجوع
-let api=null,D=null,Dp=null,fontOk=false,fontP=null,pg=null,V=null,cur=1,mode="page",W=0,H=0,bars=false,enteredAt=0,markP=0,markA=-1,saveT=0,scrT=0,idx=null;
-const fits=new Map(); // "صفحة|عرض|طول" → [حجم الخط، ارتفاع السطر]
+let api=null,D=null,T=null,Tp=null,Dp=null,pg=null,V=null,cur=1,mode="page",W=0,H=0,bars=false,enteredAt=0,markP=0,markA=-1,saveT=0,scrT=0,idx=null;
+const faces=new Map(); // صفحة → FontFace (بس ٣)
 
 /* ---------- البيانات ---------- */
-// بالتطبيق: من الـAPK (quran/… ينخدم من التلفون، بلا نت). بالمتصفح بلا التلفون: نفس الملفات من مستودع yawmi-releases.
-const BASE=()=>Q()?"quran/":"https://raw.githubusercontent.com/mode11h19-cell/yawmi-releases/main/quran/";
-function data(){if(D)return Promise.resolve(D);if(!Dp)Dp=fetch(BASE()+"q.json").then(r=>r.json()).then(j=>D=j).catch(e=>{Dp=null;throw e});return Dp}
-const last=(a,g)=>{let lo=0,hi=a.length-1;while(lo<hi){const m=(lo+hi+1)>>1;if(a[m]<=g)lo=m;else hi=m-1}return lo};
-let S0=null;const surahOf=g=>last(S0||(S0=D.s.map(x=>x[2])),g); // 0..113
-const pageOf=g=>last(D.p,g)+1;                       // 1..604
-const pageEnd=p=>p<604?D.p[p]:6236;                  // أول آية بعد الصفحة
-const surahOfPage=p=>surahOf(D.p[p-1]);
-const juzOfPage=p=>last(D.j,D.p[p-1])+1;
-const ayahNo=g=>g-D.s[surahOf(g)][2]+1;
+function data(){if(D)return Promise.resolve(D);if(!Dp)Dp=fetch("quran/q.json").then(r=>r.json()).then(j=>D=j).catch(e=>{Dp=null;throw e});return Dp}
+function text(){if(T)return Promise.resolve(T);if(!Tp)Tp=fetch("quran/t.json").then(r=>r.json()).then(j=>T=j.p).catch(e=>{Tp=null;throw e});return Tp}
+const S0=g=>{let s=0;while(s+1<114&&D.s0[s+1]<=g)s++;return s}; // سورة الآية (0..113)
+const surahOfPage=p=>{const L=D.p[p-1],h=L.find(l=>l[0]==="S");return h?+h.slice(1)-1:S0(D.pa[p-1])};
+const juzOfPage=p=>D.pj[p-1];
 
 /* ---------- الشريطة وقراءتي اليومية (بالتلفون؛ بالمتصفح بهالجهاز) ---------- */
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
@@ -40,47 +39,44 @@ function read(page){if(Q()){try{Q().read(page)}catch(e){}return}const o=local();
 function setGoal(n){if(Q()){try{Q().goal(n)}catch(e){}return}const o=local();o.goal=n;putLocal(o)}
 function goalLine(s){s=s||state();if(!s.goal)return"";return s.done>=s.goal?"✓":`اليوم ${ar(Math.min(s.done,s.goal))} من ${ar(s.goal)}`}
 
-/* ---------- الخط (واحد، داخل التطبيق) ---------- */
-function font(){if(fontOk)return Promise.resolve();
-  if(!fontP){const f=new FontFace("AQ",`url(${BASE()}amiri-quran.ttf)`,{display:"block"});
-    fontP=f.load().then(()=>{document.fonts.add(f);fontOk=true}).catch(()=>{fontOk=true})}
-  return fontP}
+/* ---------- الخطوط ---------- */
+const fontUrl=p=>Q()?`url(quran/v2/p${String(p).padStart(3,"0")}.woff)`
+  :`url(${QF}p${p}.woff2) format("woff2"), url(${GH}p${String(p).padStart(3,"0")}.woff) format("woff")`;
+function face(p){let f=faces.get(p);if(f)return f;
+  f=new FontFace("qp"+p,fontUrl(p),{display:"block"});faces.set(p,f);
+  f.load().then(()=>{document.fonts.add(f);if(Math.abs(p-cur)<=1)fill(p,true)}).catch(()=>{faces.delete(p)});
+  return f}
+const ready=p=>{const f=faces.get(p);return !!(f&&f.status==="loaded")};
+function trim(){for(const [p,f] of faces)if(Math.abs(p-cur)>1){try{document.fonts.delete(f)}catch(e){}faces.delete(p)}}
 
 /* ---------- رسم الصفحة ---------- */
-// علامة الآية: ۝ وبعدها الرقم (Amiri Quran يرسمها دائرة بيها الرقم)، ملزوقة بآخر كلمة بمسافة ما تنكسر
-function pageHtml(p){const s0=surahOfPage(p);let h="",par="";
-  const flush=()=>{if(par){h+=`<p class="qt">${par}</p>`;par=""}};
-  for(let g=D.p[p-1];g<pageEnd(p);g++){const n=ayahNo(g),s=surahOf(g);
-    if(n===1){flush();h+=`<div class="qsh"><span>سورة ${esc(D.s[s][0])}</span></div>`;if(D.b[s])h+=`<div class="qbs">${esc(D.b[s])}</div>`}
-    par+=`<span data-a="${g}">${esc(D.t[g])}\u00a0\u06dd${ar(n)}</span> `}
-  flush();
-  return `<div class="qpg"><div class="qhd"><span>${esc(D.s[s0][0])}</span><span>الجزء ${ar(juzOfPage(p))}</span></div>
-  <div class="qbx"><div class="qin">${h}</div></div><div class="qno">${ar(p)}</div></div>`}
-/* الحجم: أكبر خط تدخل بيه الصفحة كلها بالإطار، وبعدين السطور تتباعد شوية حتى ما يبقى فراغ تحت.
-   الصفحات القصيرة (الفاتحة، أول البقرة) لها حد، وتبقى بالنص. */
-function fit(p,el){const bx=$(".qbx",el),qin=$(".qin",el);if(!bx||!qin)return;
-  const Hh=bx.clientHeight,Ww=bx.clientWidth,key=p+"|"+Ww+"|"+Hh,c=fits.get(key);
-  const put=(f,l)=>{qin.style.fontSize=f+"px";qin.style.lineHeight=String(l)};
-  if(c){put(c[0],c[1]);return}
-  const ok=()=>qin.scrollHeight<=Hh+0.5;
-  let lo=10,hi=Math.min(Ww/9,Hh/4.5);put(hi,1.9);
-  if(!ok()){for(let k=0;k<14;k++){const m=(lo+hi)/2;put(m,1.9);if(ok())lo=m;else hi=m}}else lo=hi;
-  let a=1.9,b=2.6;put(lo,b);if(!ok()){for(let k=0;k<10;k++){const m=(a+b)/2;put(lo,m);if(ok())a=m;else b=m}}else a=b;
-  put(lo,a);fits.set(key,[lo,a])}
+function lineHtml(p,l,k,glyph){const s=D.p[p-1][l];
+  if(!s)return `<div class="ql e"></div>`;
+  if(s[0]==="S"){const n=+s.slice(1);return `<div class="ql sh"><span>سُورَةُ ${esc(D.s[n-1][1])}</span></div>`}
+  if(s==="B")return `<div class="ql bs">بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ</div>`;
+  const c=s[0]==="~",ws=(c?s.slice(1):s).split(" "),tw=glyph?null:(T&&T[p-1][l]||"").split(" ");
+  let h="";ws.forEach((w,i)=>{const end=w[0]==="^";h+=`<span data-a="${k.g}">${esc(glyph?(end?w.slice(1):w):(tw[i]||"").replace(/ /g," "))}</span>`;if(end)k.g++});
+  return `<div class="ql${c?" c":""}${glyph?"":" tx"}">${h}</div>`}
+function pageHtml(p){const glyph=ready(p),k={g:D.pa[p-1]},L=D.p[p-1],few=p<=2;
+  let ls="";L.forEach((_,l)=>{if(few&&!L[l])return;ls+=lineHtml(p,l,k,glyph)});
+  const s=surahOfPage(p);
+  return `<div class="qpg${few?" few":""}"><div class="qhd"><span>${esc(D.s[s][0])} <i>${ar(s+1)}</i></span></div>
+  <div class="qls" style="${glyph?`font-family:qp${p}`:""}">${ls}</div>
+  <div class="qft"><span>الجزء ${ar(juzOfPage(p))}</span><span class="qno">${ar(p)}</span><span>الحزب ${ar(D.ph[p-1])}</span></div></div>`}
 function slot(p){return V&&V.children[p-1]}
-function fill(p,force){const el=slot(p);if(!el||!D)return;if(!force&&el.firstChild)return;
-  if(!fontOk){el.innerHTML=`<div class="qpg"><div class="qwait">…</div></div>`;font().then(()=>fill(p,true));return}
-  el.innerHTML=pageHtml(p);fit(p,el);
+function fill(p,force){const el=slot(p);if(!el||!D)return;if(!force&&el.firstChild&&el.dataset.g===String(ready(p)))return;
+  if(!ready(p)){face(p);if(!T){text().then(()=>fill(p,true)).catch(()=>{});el.innerHTML=`<div class="qpg"><div class="qwait">…</div></div>`;return}}
+  el.dataset.g=String(ready(p));el.innerHTML=pageHtml(p);
   if(markP===p&&markA>=0)$$(`[data-a="${markA}"]`,el).forEach(s=>s.classList.add("hl"))}
-function windowAt(p){for(let k=Math.max(1,p-1);k<=Math.min(604,p+1);k++)fill(k);
+function windowAt(p){for(let k=Math.max(1,p-1);k<=Math.min(604,p+1);k++){face(k);fill(k)}
   // ٣ صفحات بس بالذاكرة
-  $$(".qs",V).forEach((el,i)=>{if(Math.abs(i+1-p)>1&&el.firstChild)el.innerHTML=""})}
+  $$(".qs",V).forEach((el,i)=>{if(Math.abs(i+1-p)>1&&el.firstChild){el.innerHTML="";delete el.dataset.g}});trim()}
 
 /* ---------- الصفحة والتنقل ---------- */
 function geom(){W=pg.clientWidth;H=pg.clientHeight;const r=document.documentElement.style;
   const cs=getComputedStyle(document.documentElement),sat=parseFloat(cs.getPropertyValue("--sat"))||0,sab=parseFloat(cs.getPropertyValue("--sab"))||0;
-  const top=sat+30,bot=sab+30;
-  pg.style.setProperty("--qw",W+"px");pg.style.setProperty("--qh",H+"px");
+  const top=sat+30,bot=sab+30,lh=(H-top-bot)/15,fs=Math.min((W-16)/17.4,lh/1.55);
+  pg.style.setProperty("--qw",W+"px");pg.style.setProperty("--qh",H+"px");pg.style.setProperty("--qlh",lh+"px");pg.style.setProperty("--qfs",fs+"px");
   pg.style.setProperty("--qtop",top+"px");pg.style.setProperty("--qbot",bot+"px")}
 function ensure(){if(pg)return;pg=document.createElement("section");pg.id="qrPg";pg.hidden=true;pg.setAttribute("aria-label","القرآن الكريم");
   pg.innerHTML=`<div id="qrV"></div>
@@ -93,7 +89,7 @@ function curFromScroll(){return mode==="page"?Math.round(Math.abs(V.scrollLeft)/
 function onScroll(){clearTimeout(scrT);scrT=setTimeout(()=>{const p=Math.max(1,Math.min(604,curFromScroll()));if(p!==cur)setCur(p)},mode==="page"?60:90)}
 function setCur(p){const was=cur,now=Date.now();
   if(p===was+1&&now-enteredAt>=COUNT_MS)read(was);
-  cur=p;enteredAt=now;windowAt(p);barsText();
+  cur=p;enteredAt=now;windowAt(p);barsText();if(Q()&&Q().fetch)try{Q().fetch(p)}catch(e){}
   clearTimeout(saveT);saveT=setTimeout(()=>keep(cur,markP===cur?markA:-1,true),400)}
 function go(p,instant){p=Math.max(1,Math.min(604,p));cur=p;enteredAt=Date.now();
   if(mode==="page")V.scrollLeft=-(p-1)*W;else V.scrollTop=(p-1)*H;windowAt(p);barsText()}
@@ -105,15 +101,15 @@ function open(page,a){if(!api)return;ensure();
   pg.hidden=false;document.body.classList.add("qr-on");bars=false;showBars();
   try{history.pushState({zq:1},"")}catch(e){}
   if(Q())try{Q().keep(true)}catch(e){}
-  Promise.all([data(),font()]).then(()=>{geom();mode=(api.cfg().qMode==="scroll")?"scroll":"page";pg.classList.toggle("scroll",mode==="scroll");pg.classList.toggle("paged",mode==="page");
-    go(p,true);if(markA>=0&&markP===p)setTimeout(()=>underline(p,markA),350)})
+  data().then(()=>{geom();mode=(api.cfg().qMode==="scroll")?"scroll":"page";pg.classList.toggle("scroll",mode==="scroll");pg.classList.toggle("paged",mode==="page");
+    go(p,true);if(markA>=0&&markP===p)setTimeout(()=>underline(p,markA),350);if(Q()&&Q().fetch)try{Q().fetch(p)}catch(e){}})
     .catch(()=>{api.toast("ما گدرت أفتح المصحف");close(true)})}
 // المرة الجاية: الآية اللي وقفت عليها عليها خط رفيع لثانيتين
 function underline(p,a){const el=slot(p);if(!el)return;const s=$$(`[data-a="${a}"]`,el);s.forEach(x=>x.classList.add("ul"));setTimeout(()=>s.forEach(x=>x.classList.remove("ul")),2000)}
 // tellHistory=false: الرجوع جاي من زر الرجوع (popstate) فالخطوة انشالت
 function close(fromPop){if(!isOpen())return 0;keep(cur,markP===cur?markA:-1,false);
   pg.hidden=true;document.body.classList.remove("qr-on");idxClose();if(Q())try{Q().keep(false)}catch(e){}
-  $$(".qs",V).forEach(el=>{el.innerHTML=""});
+  for(const [p,f] of faces){try{document.fonts.delete(f)}catch(e){}}faces.clear();$$(".qs",V).forEach(el=>{el.innerHTML="";delete el.dataset.g});
   if(!fromPop){skipPop=1;try{history.back()}catch(e){skipPop=0}}
   if(window.YZ&&YZ.refresh)YZ.refresh();return 1}
 
@@ -146,8 +142,8 @@ function idxOpen(){if(!D)return;if(!idx){idx=document.createElement("div");idx.c
   idx.hidden=false;idx.dataset.t=idx.dataset.t||"s";idxDraw();try{history.pushState({zq:2},"")}catch(e){}}
 function idxClose(){if(idx)idx.hidden=true}
 function idxDraw(){const s=state(),cs=surahOfPage(cur),cj=juzOfPage(cur),t=idx.dataset.t;
-  const list=t==="s"?D.s.map((x,i)=>{const p=pageOf(x[2]);return `<button class="qi${i===cs?" on":""}" data-qp="${p}"><span class="no">${ar(i+1)}</span><b>${esc(x[0])}</b><small>${ar(x[1])} آية</small><span class="pg">${ar(p)}</span></button>`}).join("")
-    :D.j.map((g,i)=>{const p=pageOf(g);return `<button class="qi${i+1===cj?" on":""}" data-qp="${p}"><span class="no">${ar(i+1)}</span><b>الجزء ${ar(i+1)}</b><small>${esc(D.s[surahOf(g)][0])} ${ar(ayahNo(g))}</small><span class="pg">${ar(p)}</span></button>`}).join("");
+  const list=t==="s"?D.s.map((x,i)=>`<button class="qi${i===cs?" on":""}" data-qp="${x[3]}"><span class="no">${ar(i+1)}</span><b>${esc(x[0])}</b><small>${ar(x[2])} آية</small><span class="pg">${ar(x[3])}</span></button>`).join("")
+    :D.j.map((x,i)=>`<button class="qi${i+1===cj?" on":""}" data-qp="${x[0]}"><span class="no">${ar(i+1)}</span><b>الجزء ${ar(i+1)}</b><small>${esc(D.s[x[1]-1][0])} ${ar(x[2])}</small><span class="pg">${ar(x[0])}</span></button>`).join("");
   idx.innerHTML=`<div class="qi-top"><button class="qr-b" data-qc>✕</button><b>الفهرس</b><span></span></div>
   <div class="qi-tabs"><button data-qt="s" aria-pressed="${t==="s"}">السور</button><button data-qt="j" aria-pressed="${t==="j"}">الأجزاء</button></div>
   <label class="qi-q"><input id="qiQ" type="search" placeholder="اسم السورة أو رقم الصفحة" autocomplete="off"></label>
@@ -155,7 +151,7 @@ function idxDraw(){const s=state(),cs=surahOfPage(cur),cj=juzOfPage(cur),t=idx.d
   <div class="qi-set"><b>شلون تقرا</b><div class="seg">${[["page","صفحة صفحة"],["scroll","تمرير لتحت"]].map(([k,l])=>`<button data-qm="${k}" aria-pressed="${mode===k}">${l}</button>`).join("")}</div>
   <b>قراءتي اليومية</b><div class="seg">${GOALS.map(([n,l])=>`<button data-qg="${n}" aria-pressed="${(s.goal||0)===n}">${l}</button>`).join("")}</div>
   ${s.goal?`<p class="qi-g">${goalLine(s)}</p>`:""}
-  <p class="qi-src">${SRC}</p></div>`;
+  <p class="qi-src">${SRC}${Q()&&s.total?` · نازل ${ar(s.fonts)} من ${ar(s.total)}`:""}</p></div>`;
   const q=$("#qiQ",idx);q.oninput=()=>{const v=fold(q.value);$$(".qi",idx).forEach(b=>b.hidden=false);if(!v)return;
     if(/^[\d٠-٩]+$/.test(v)){const n=+v.replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d));$("#qiL",idx).innerHTML=n>=1&&n<=604?`<button class="qi" data-qp="${n}"><b>صفحة ${ar(n)}</b><small>${esc(D.s[surahOfPage(n)][0])}</small><span class="pg">${ar(n)}</span></button>`:`<p class="qi-g">من ١ لـ٦٠٤</p>`;return}
     $$(".qi",idx).forEach(b=>{b.hidden=!fold($("b",b).textContent).includes(v)})};
@@ -171,8 +167,8 @@ function idxDraw(){const s=state(),cs=surahOfPage(cur),cj=juzOfPage(cur),t=idx.d
 function back(){if(skipPop){skipPop=0;return true}if(idx&&!idx.hidden){idxClose();return true}if(isOpen()){close(true);return true}return false}
 
 /* ---------- المصدر: سطر بالفهرس وبالإعدادات ---------- */
-const SRC="نص القرآن من Tanzil.net · الخط Amiri Quran";
-function srcHtml(){return `<p class="meta qi-src2">نص القرآن من Tanzil.net</p>`}
+const SRC="خطوط القرآن من Quran Foundation · مصحف المدينة النبوية (مجمع الملك فهد) · ترتيب الصفحات من QUL";
+function srcHtml(){return `<p class="meta qi-src2">خطوط القرآن من Quran Foundation</p>`}
 
 /* ---------- كارت «كمّل القراءة» بـ«زاد» ---------- */
 function cardHtml(){const s=state();if(!D){data().then(()=>{if(window.YZ&&YZ.refresh)YZ.refresh()}).catch(()=>{});return""}
@@ -185,3 +181,4 @@ function init(o){api=o;const P=new URLSearchParams(location.search),q=P.get("qur
 const depth=()=>isOpen()?1+(idx&&!idx.hidden?1:0):0;
 window.YQ={init,open,close,isOpen,back,depth,cardHtml,state,srcHtml};
 })();
+

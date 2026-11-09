@@ -1,8 +1,8 @@
-/* «القرآن الكريم» (quran.js): الصفحة تملي الشاشة. ورقي بالفاتح وكتابة سودة، أسود بالغامق وكتابة بيضة مكسورة. */
-/* الخط الوحيد: Amiri Quran (OFL، quran/OFL-amiri.txt). يتحمّل من quran.js (font) من التطبيق نفسه */
-#qrPg{--qpaper:#fbfaf7;--qink:#000;--qmut:rgba(0,0,0,.45);--qline:rgba(0,0,0,.14);--qhl:rgba(0,0,0,.09);
+/* «القرآن الكريم» (quran.js): الصفحة تملي الشاشة. ورق كريمي بالفاتح وكتابة بنية غامقة، أسود بالغامق وكتابة بيضة مكسورة. */
+@font-face{font-family:"QH";src:url(quran/hafs.ttf) format("truetype");font-display:swap}
+#qrPg{--qpaper:#fbf6ea;--qink:#1d1a16;--qmut:rgba(29,26,22,.5);--qline:rgba(29,26,22,.16);--qhl:rgba(29,26,22,.09);
   position:fixed;inset:0;z-index:40;background:var(--qpaper);color:var(--qink);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-:root[data-theme="dark"] #qrPg{--qpaper:#0b0b0d;--qink:#ecebe6;--qmut:rgba(236,235,230,.45);--qline:rgba(236,235,230,.16);--qhl:rgba(236,235,230,.13)}
+:root[data-theme="dark"] #qrPg{--qpaper:#0f0f11;--qink:#ecebe6;--qmut:rgba(236,235,230,.45);--qline:rgba(236,235,230,.16);--qhl:rgba(236,235,230,.13)}
 #qrPg[hidden]{display:none}
 body.qr-on{overflow:hidden}
 #qrV{position:absolute;inset:0;overscroll-behavior:contain;scrollbar-width:none}
@@ -14,20 +14,26 @@ body.qr-on{overflow:hidden}
 #qrPg.scroll #qrV{overflow-y:auto;overflow-x:hidden}
 #qrPg.scroll .qs{height:var(--qh);border-bottom:1px solid var(--qline)}
 .qs{position:relative;contain:strict}
-.qpg{position:absolute;inset:0;direction:rtl}
-.qhd{position:absolute;top:calc(var(--qtop) - 24px);right:16px;left:16px;display:flex;justify-content:space-between;font:400 11.5px/1 "IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--qmut)}
-.qno{position:absolute;bottom:calc(var(--qbot) - 22px);left:0;right:0;text-align:center;font:400 12px/1 "IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--qmut)}
-/* الإطار: الآيات تمليه (quran.js fit يحسب حجم الخط وارتفاع السطر لكل صفحة) */
-.qbx{position:absolute;top:var(--qtop);bottom:var(--qbot);right:12px;left:12px;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
-.qin{font-family:"AQ",serif;color:var(--qink);font-size:22px;line-height:1.9}
-.qt{margin:0;text-align:justify;text-align-last:center;text-justify:inter-word}
-.qsh{margin:.15em 0 .1em;text-align:center;line-height:1.7}
-.qsh span{display:block;border:1px solid var(--qline);border-radius:4px;font-size:.82em}
-.qbs{text-align:center;font-size:.92em}
-.qt span{border-radius:3px;transition:background .2s}
-.qt span.hl{background:var(--qhl);box-shadow:0 0 0 .08em var(--qhl)}
-.qt span.ul{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.32em}
-.qwait{margin:auto;color:var(--qmut);font-size:22px;position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.qpg{position:absolute;inset:0;padding:var(--qtop) 8px var(--qbot);display:flex;flex-direction:column;direction:rtl}
+/* فوق: اسم السورة برقمها. تحت: الجزء · رقم الصفحة بإطار بيضوي · الحزب */
+.qhd{position:absolute;top:calc(var(--qtop) - 24px);right:16px;left:16px;display:flex;justify-content:center;font:500 12px/1 "IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--qmut)}
+.qhd i{font-style:normal;margin-inline-start:4px}
+.qft{position:absolute;bottom:calc(var(--qbot) - 27px);left:16px;right:16px;display:flex;justify-content:space-between;align-items:center;font:400 11.5px/1 "IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--qmut)}
+.qft span{flex:1}.qft span:last-child{text-align:left}
+.qft .qno{flex:none;min-width:38px;padding:4px 10px;border:1px solid var(--qline);border-radius:50%;text-align:center;font-size:12px;color:var(--qink)}
+.qls{flex:1;display:flex;flex-direction:column;font-size:var(--qfs);color:var(--qink)}
+.qpg.few .qls{justify-content:center}
+.ql{height:var(--qlh);display:flex;justify-content:space-between;align-items:center;white-space:nowrap;line-height:1}
+.ql.c{justify-content:center;gap:.22em}
+.ql span{border-radius:3px;transition:background .2s}
+.ql span.hl{background:var(--qhl);box-shadow:0 0 0 .08em var(--qhl)}
+.ql span.ul{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.32em}
+.ql.tx{font-family:"QH",serif;font-size:.8em}
+.ql.sh{justify-content:center}
+.ql.sh span{display:block;width:100%;text-align:center;font:400 calc(var(--qfs)*.78)/1.9 "QH",serif;border:1px solid var(--qline);border-radius:4px}
+.ql.bs{justify-content:center;font:400 calc(var(--qfs)*.86)/1 "QH",serif}
+.ql.e{visibility:hidden}
+.qwait{margin:auto;color:var(--qmut);font-size:22px}
 /* دوسة: شريط رفيع فوق وتحت */
 .qr-top,.qr-bot{position:absolute;left:10px;right:10px;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;
   background:color-mix(in srgb,var(--qpaper) 88%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
