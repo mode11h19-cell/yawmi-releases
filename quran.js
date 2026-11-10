@@ -1,13 +1,13 @@
-/* «القرآن الكريم» داخل «زاد» (docs/quran/README.md): مصحف المدينة النبوية الحقيقي، ٦٠٤ صفحة، ١٥ سطر.
-   كل صفحة مكتوبة بخطها (QCF V2، مجمع الملك فهد ١٤٢١هـ) وترتيب سطورها من QUL: نفس الورقي سطر بسطر، بس كتابة مو صورة.
-   - quran/q.json: السطور ورموز الكلمات والفهرس (بالـAPK، ينخدم من التلفون). quran/t.json: نفس الكلمات بنص حفص،
-     تبين لحد ما ينزل خط الصفحة (احتياط).
-   - الخطوط: بالتطبيق من التلفون (Quran.java ينزلها أول مرة من Quran Foundation ويحفظها)، بالمتصفح من Quran Foundation
-     مباشرة، والاحتياط نسختنا على GitHub.
-   - الشكل (Nov 9): ورق كريمي، فوق اسم السورة برقمها، تحت الجزء ورقم الصفحة بإطار بيضوي والحزب.
-   - «شريط القراءة» {page, a}: وحدة بكل التطبيق والودجتين. ينحفظ لحاله لما تطلع.
-   - بالذاكرة بس ٣ صفحات (الحالية واللي جنبها)؛ الباقي فارغ.
-   zad.js يناديها: YQ.init(api)، YQ.open(page)، YQ.cardHtml()، YQ.close(). */
+/* «القرآن الكريم» داخل «زاد» (docs/quran/README.md). تعديل القرآن ٢ (Nov 10): الفهرس أول شي، وطريقتين للقراءة من زر ▾ فوق:
+   - «آية تحت آية» (الافتراضي): نص السورة بخط المصحف (KFGQPC Uthmanic Script HAFS = quran/hafs.ttf)، كبير ويملي العرض،
+     تنزل بإصبعك، وتسحب يمين/يسار للسورة اللي بعدها/قبلها. بين كل صفحة والثانية خط رفيع عليه «صفحة N».
+   - «صفحة صفحة»: مصحف المدينة الحقيقي، ٦٠٤ صفحة × ١٥ سطر، كل صفحة بخطها (QCF V2). الصفحة اللي قبل واللي بعد جاهزات.
+   - quran/q.json: السطور ورموز الكلمات والفهرس. quran/t.json: نفس الكلمات بنص حفص (منه تنبني الآيات لـ«آية تحت آية»).
+     quran/s.json: النص الإملائي (مجمع الملك فهد) للبحث بس، ينزل أول ما تبحث.
+   - «شريط القراءة» {page, a}: مكان واحد بكل التطبيق والودجتين (بالتلفون Quran.java، SharedPreferences "reading").
+     ينكتب كل ما يوگف التمرير (نص ثانية) وتتحدّث الودجتين وياه.
+   - «القراءة اليومية»: بالوقت المختار يطلع القرآن فوق شاشة القفل وما تطلع لحد ما تخلص الكمية (بالتلفون).
+   zad.js يناديها: YQ.init(api)، YQ.open() الفهرس، YQ.open(page[,a]) القراءة، YQ.cardHtml()، YQ.close(). */
 (function(){
 const Q=()=>window.YawmiQuran;
 const $=(s,r)=>(r||document).querySelector(s),$$=(s,r)=>[...(r||document).querySelectorAll(s)];
@@ -15,47 +15,75 @@ const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;"
 const ar=n=>String(n).replace(/\d/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
 const buzz=p=>{const m=window.YM;if(m)m.haptic(p);else try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
 const QF="https://verses.quran.foundation/fonts/quran/hafs/v2/woff2/",GH="https://raw.githubusercontent.com/mode11h19-cell/yawmi-releases/main/quran/v2/";
-const GOALS=[[0,"بلا"],[1,"صفحة"],[5,"ربع جزء"],[10,"نص جزء"],[20,"جزء"]];
-const COUNT_MS=15000; // الصفحة تنحسب لما تقلبها بعد ١٥ ثانية عليها
+const COUNT_MS=15000; // الصفحة تنحسب لما تعبرها بعد ١٥ ثانية عليها
+const AMOUNTS=[[1,"صفحة"],[2,"صفحتين"],[5,"ربع جزء"],[10,"نص جزء"]];
+const DAYS=["س","ح","ن","ث","ر","خ","ج"]; // السبت أول
+// السور المدنية (ترتيب مصحف المدينة)
+const MADANI=new Set([2,3,4,5,8,9,13,22,24,33,47,48,49,55,57,58,59,60,61,62,63,64,65,66,76,98,99,110]);
+const FS0=28,FSMIN=22,FSMAX=40;
 
-let skipPop=0; // الرجوع اللي سويناه احنا (زر «زاد» فوق): مو زر الرجوع
-let api=null,D=null,T=null,Tp=null,Dp=null,pg=null,V=null,cur=1,mode="page",W=0,H=0,bars=false,enteredAt=0,markP=0,markA=-1,saveT=0,scrT=0,idx=null;
-const faces=new Map(); // صفحة → FontFace (بس ٣)
+let api=null,D=null,T=null,Tp=null,Dp=null,Sp=null,SF=null,AY=null;
+let pg=null,V=null,RV=null,idx=null,dly=null,menu=null,lockEl=null;
+let stack=[],skipPop=0,mode="read",cur=1,curS=0,W=0,H=0,bars=true,enteredAt=0,markA=-1,saveT=0,scrT=0,vT=0,idleT=0,lastKept=null,lockO=null;
+const faces=new Map(); // صفحة → FontFace (آخر ٧ بس)
 
 /* ---------- البيانات ---------- */
 function data(){if(D)return Promise.resolve(D);if(!Dp)Dp=fetch("quran/q.json").then(r=>r.json()).then(j=>D=j).catch(e=>{Dp=null;throw e});return Dp}
 function text(){if(T)return Promise.resolve(T);if(!Tp)Tp=fetch("quran/t.json").then(r=>r.json()).then(j=>T=j.p).catch(e=>{Tp=null;throw e});return Tp}
+function both(){return Promise.all([data(),text()]).then(()=>ayat())}
 const S0=g=>{let s=0;while(s+1<114&&D.s0[s+1]<=g)s++;return s}; // سورة الآية (0..113)
 const surahOfPage=p=>{const L=D.p[p-1],h=L.find(l=>l[0]==="S");return h?+h.slice(1)-1:S0(D.pa[p-1])};
 const juzOfPage=p=>D.pj[p-1];
+const sEnd=s=>s<113?D.s0[s+1]:6236;
+/* الآيات بنص حفص، من نفس كلمات t.json: كلمة تبدي بـ^ بـq.json = رقم الآية. صفحة الآية = صفحة أول كلمة بيها. */
+function ayat(){if(AY)return AY;const w=new Array(6236),n=new Array(6236),p=new Int16Array(6236);let g=0,c=[],p0=0;
+  for(let k=1;k<=604;k++){const L=D.p[k-1],TL=T[k-1];
+    for(let l=0;l<L.length;l++){const s=L[l];if(!s||s[0]==="S"||s==="B")continue;
+      const qs=(s[0]==="~"?s.slice(1):s).split(" "),ts=(TL[l]||"").split(" ");
+      for(let i=0;i<qs.length&&g<6236;i++){const t=(ts[i]||"").replace(/ /g," ");
+        if(qs[i][0]==="^"){w[g]=c.join(" ");n[g]=t;p[g]=p0||k;g++;c=[];p0=0}else{if(!c.length)p0=k;c.push(t)}}}}
+  return AY={w,n,p}}
+const pageOfA=g=>AY?AY.p[g]:0;
+const firstOn=p=>{if(!AY)return D.pa[p-1];let g=D.pa[p-1];while(g<6235&&AY.p[g]<p)g++;return AY.p[g]===p?g:D.pa[p-1]};
+const lastOn=p=>{let g=firstOn(Math.min(604,p+1));if(p>=604)return 6235;while(g>0&&AY.p[g]>p)g--;return g};
+const aname=g=>{const s=S0(g);return D.s[s][0]+" · الآية "+ar(g-D.s0[s]+1)};
 
 /* ---------- الشريطة وقراءتي اليومية (بالتلفون؛ بالمتصفح بهالجهاز) ---------- */
 const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 function local(){let o={};try{o=JSON.parse(localStorage.getItem("yawmi-q")||"{}")}catch(e){}if(o.day!==today()){o.day=today();o.done=0;o.seen=[]}return o}
 function putLocal(o){try{localStorage.setItem("yawmi-q",JSON.stringify(o))}catch(e){}}
-function state(){if(Q()){try{const s=JSON.parse(Q().state());if(s)return s}catch(e){}}const o=local();return {page:o.page||1,a:o.a==null?-1:o.a,at:o.at||0,goal:o.goal||0,done:o.done||0}}
-function keep(page,a,quiet){if(Q()){try{quiet&&Q().at?Q().at(page,a):Q().set(page,a)}catch(e){}return}const o=local();o.page=page;o.a=a;o.at=Date.now();putLocal(o)}
+function state(){if(Q()){try{const s=JSON.parse(Q().state());if(s)return s}catch(e){}}const o=local();
+  return {page:o.page||1,a:o.a==null?-1:o.a,at:o.at||0,goal:o.daily&&o.daily.on?o.daily.n:0,done:o.done||0,daily:o.daily||null}}
+function keep(page,a){lastKept=page+":"+a;if(Q()){try{Q().set(page,a)}catch(e){}return}const o=local();o.page=page;o.a=a;o.at=Date.now();putLocal(o)}
 function read(page){if(Q()){try{Q().read(page)}catch(e){}return}const o=local();if(!o.seen.includes(page)){o.seen.push(page);o.done=(o.done||0)+1;putLocal(o)}}
-function setGoal(n){if(Q()){try{Q().goal(n)}catch(e){}return}const o=local();o.goal=n;putLocal(o)}
 function goalLine(s){s=s||state();if(!s.goal)return"";return s.done>=s.goal?"✓":`اليوم ${ar(Math.min(s.done,s.goal))} من ${ar(s.goal)}`}
+const daily=s=>Object.assign({on:false,m:330,n:1,days:[0,1,2,3,4,5,6]},(s||state()).daily||{});
+function setDaily(d){if(Q()&&Q().daily){try{Q().daily(JSON.stringify(d))}catch(e){}return}const o=local();o.daily=d;putLocal(o)}
 
-/* ---------- الخطوط ---------- */
+/* ---------- خطوط «صفحة صفحة» ---------- */
 const fontUrl=p=>Q()?`url(quran/v2/p${String(p).padStart(3,"0")}.woff)`
   :`url(${QF}p${p}.woff2) format("woff2"), url(${GH}p${String(p).padStart(3,"0")}.woff) format("woff")`;
-function face(p){let f=faces.get(p);if(f)return f;
+function face(p){let f=faces.get(p);if(f){faces.delete(p);faces.set(p,f);return f} // آخر استعمال بالآخر
   f=new FontFace("qp"+p,fontUrl(p),{display:"block"});faces.set(p,f);
-  f.load().then(()=>{document.fonts.add(f);if(Math.abs(p-cur)<=1)fill(p,true)}).catch(()=>{faces.delete(p)});
+  f.load().then(()=>{document.fonts.add(f);if(Math.abs(p-cur)<=2)later(()=>fill(p,true),"f"+p)}).catch(()=>{faces.delete(p)});
   return f}
 const ready=p=>{const f=faces.get(p);return !!(f&&f.status==="loaded")};
-function trim(){for(const [p,f] of faces)if(Math.abs(p-cur)>1){try{document.fonts.delete(f)}catch(e){}faces.delete(p)}}
+// LruCache لـ٧ صفحات: الأقدم يطلع، بس مو اللي جنب الصفحة الحالية
+function trim(){if(faces.size<=7)return;for(const [p,f] of faces){if(faces.size<=7)break;if(Math.abs(p-cur)<=2)continue;try{document.fonts.delete(f)}catch(e){}faces.delete(p);const el=slot(p);if(el&&el.firstChild){el.innerHTML="";delete el.dataset.g}}}
+// الشغل الثقيل بس لما يوگف السحب
+const laterQ=new Map();function later(fn,key){laterQ.set(key==null?fn:key,fn);clearTimeout(idleT);idleT=setTimeout(flushLater,120)}
+function flushLater(){if(dragging){idleT=setTimeout(flushLater,120);return}const q=[...laterQ.values()];laterQ.clear();q.forEach(f=>f())}
+let dragging=false;
 
-/* ---------- رسم الصفحة ---------- */
+/* ---------- رسم صفحة المصحف ---------- */
+// شريط اسم السورة: إطارين بأطراف مدببة ومعيّن صغير بكل جهة (quran-structure.html)
+const band=n=>`<div class="qband"><svg viewBox="0 0 300 36" preserveAspectRatio="none" aria-hidden="true"><path d="M18 3H282L297 18L282 33H18L3 18Z" stroke-opacity=".5"/><path d="M24 7H276L289 18L276 29H24L11 18Z" stroke-opacity=".22"/></svg><i></i><i></i><span>سُورَةُ ${esc(n)}</span></div>`;
 function lineHtml(p,l,k,glyph){const s=D.p[p-1][l];
   if(!s)return `<div class="ql e"></div>`;
-  if(s[0]==="S"){const n=+s.slice(1);return `<div class="ql sh"><span>سُورَةُ ${esc(D.s[n-1][1])}</span></div>`}
+  if(s[0]==="S"){const n=+s.slice(1);return `<div class="ql sh">${band(D.s[n-1][1])}</div>`}
   if(s==="B")return `<div class="ql bs">بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ</div>`;
   const c=s[0]==="~",ws=(c?s.slice(1):s).split(" "),tw=glyph?null:(T&&T[p-1][l]||"").split(" ");
-  let h="";ws.forEach((w,i)=>{const end=w[0]==="^";h+=`<span data-a="${k.g}">${esc(glyph?(end?w.slice(1):w):(tw[i]||"").replace(/ /g," "))}</span>`;if(end)k.g++});
+  let h="";ws.forEach((w,i)=>{const end=w[0]==="^";h+=`<span data-a="${k.g}">${esc(glyph?(end?w.slice(1):w):(tw[i]||"").replace(/ /g," "))}</span>`;if(end)k.g++});
   return `<div class="ql${c?" c":""}${glyph?"":" tx"}">${h}</div>`}
 function pageHtml(p){const glyph=ready(p),k={g:D.pa[p-1]},L=D.p[p-1],few=p<=2;
   let ls="";L.forEach((_,l)=>{if(few&&!L[l])return;ls+=lineHtml(p,l,k,glyph)});
@@ -64,121 +92,284 @@ function pageHtml(p){const glyph=ready(p),k={g:D.pa[p-1]},L=D.p[p-1],few=p<=2;
   <div class="qls" style="${glyph?`font-family:qp${p}`:""}">${ls}</div>
   <div class="qft"><span>الجزء ${ar(juzOfPage(p))}</span><span class="qno">${ar(p)}</span><span>الحزب ${ar(D.ph[p-1])}</span></div></div>`}
 function slot(p){return V&&V.children[p-1]}
-function fill(p,force){const el=slot(p);if(!el||!D)return;if(!force&&el.firstChild&&el.dataset.g===String(ready(p)))return;
-  if(!ready(p)){face(p);if(!T){text().then(()=>fill(p,true)).catch(()=>{});el.innerHTML=`<div class="qpg"><div class="qwait">…</div></div>`;return}}
+// ما ينعاد رسم صفحة مرسومة: بس إذا وصل خطها (كانت بنص حفص مؤقتاً)
+function fill(p,force){const el=slot(p);if(!el||!D)return;if(el.firstChild&&el.dataset.g===String(ready(p))&&!force)return;if(el.firstChild&&el.dataset.g==="true")return;
+  if(!ready(p)){face(p);if(!T){text().then(()=>fill(p,true)).catch(()=>{});if(!el.firstChild)el.innerHTML=`<div class="qpg"><div class="qwait">…</div></div>`;return}}
   el.dataset.g=String(ready(p));el.innerHTML=pageHtml(p);
-  if(markP===p&&markA>=0)$$(`[data-a="${markA}"]`,el).forEach(s=>s.classList.add("hl"))}
-function windowAt(p){for(let k=Math.max(1,p-1);k<=Math.min(604,p+1);k++){face(k);fill(k)}
-  // ٣ صفحات بس بالذاكرة
-  $$(".qs",V).forEach((el,i)=>{if(Math.abs(i+1-p)>1&&el.firstChild){el.innerHTML="";delete el.dataset.g}});trim()}
+  if(markA>=0)$$(`[data-a="${markA}"]`,el).forEach(s=>s.classList.add("hl"))}
+// الصفحة وجيرانها (±٢) جاهزات قبل لا توصلها؛ البعيدة (أكثر من ٣) تنمسح
+function windowAt(p){for(let d=0;d<=2;d++){[p+d,p-d].forEach(k=>{if(k>=1&&k<=604){face(k);fill(k)}})}
+  $$(".qs",V).forEach((el,i)=>{if(Math.abs(i+1-p)>3&&el.firstChild){el.innerHTML="";delete el.dataset.g}});trim()}
+
+/* ---------- «آية تحت آية» ---------- */
+const BAS="بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ";
+function surahHtml(s){const a0=D.s0[s],a1=sEnd(s);
+  let h=`<div class="qsu-in"><div class="qsh">${band(D.s[s][1])}</div>${s!==0&&s!==8?`<div class="qbs">${BAS}</div>`:""}`,p=-1;
+  for(let g=a0;g<a1;g++){const pp=AY.p[g];
+    if(pp!==p){if(p>0)h+=`</p><div class="qpb"><span>صفحة ${ar(pp)}</span></div>`;h+=`<p class="qtx" data-p="${pp}">`;p=pp}
+    h+=`<span class="qa" data-a="${g}">${esc(AY.w[g])} <span class="qn">${AY.n[g]}</span></span> `}
+  return h+`</p>${s<113?`<p class="qnx">${esc(D.s[s+1][0])} ‹ اسحب</p>`:""}</div>`}
+function rslot(s){return RV&&RV.children[s]}
+function rfill(s){const el=rslot(s);if(!el||el.firstChild)return;el.innerHTML=surahHtml(s);el.scrollTop=0}
+function rwindow(s){for(const k of [s,s+1,s-1])if(k>=0&&k<114)rfill(k);
+  $$(".qsu",RV).forEach((el,i)=>{if(Math.abs(i-s)>1&&el.firstChild){el.innerHTML=""}})}
+// أول آية ظاهرة كاملة بالشاشة (بحث ثنائي على الآيات)
+function firstSeen(){const el=rslot(curS);if(!el||!el.firstChild)return D.s0[curS];const A=$$(".qa",el);if(!A.length)return D.s0[curS];
+  const top=el.getBoundingClientRect().top+(bars?topH():0)+4;let lo=0,hi=A.length-1,r=A.length-1;
+  while(lo<=hi){const m=(lo+hi)>>1;if(A[m].getBoundingClientRect().top>=top){r=m;hi=m-1}else lo=m+1}
+  return +A[r].dataset.a}
+const topH=()=>{const t=pg&&$(".qr-top",pg);return t&&!t.hidden?t.getBoundingClientRect().bottom:0};
+let progAt=0; // تمرير سوّيناه احنا (مو إصبعك): ما يخفي الشريط
+function toAyah(g,flash){const el=rslot(curS);if(!el)return;const a=$(`.qa[data-a="${g}"]`,el);if(!a)return;progAt=Date.now();
+  if(g===D.s0[curS])el.scrollTop=0;else el.scrollTop+=a.getBoundingClientRect().top-el.getBoundingClientRect().top-Math.max(90,topH()+18);
+  if(flash){a.classList.add("fl");setTimeout(()=>a.classList.add("off"),2000);setTimeout(()=>a.classList.remove("fl","off"),3400)}}
 
 /* ---------- الصفحة والتنقل ---------- */
-function geom(){W=pg.clientWidth;H=pg.clientHeight;const r=document.documentElement.style;
+function geom(){W=pg.clientWidth;H=pg.clientHeight;
   const cs=getComputedStyle(document.documentElement),sat=parseFloat(cs.getPropertyValue("--sat"))||0,sab=parseFloat(cs.getPropertyValue("--sab"))||0;
-  const top=sat+30,bot=sab+30,lh=(H-top-bot)/15,fs=Math.min((W-16)/17.4,lh/1.55);
-  pg.style.setProperty("--qw",W+"px");pg.style.setProperty("--qh",H+"px");pg.style.setProperty("--qlh",lh+"px");pg.style.setProperty("--qfs",fs+"px");
-  pg.style.setProperty("--qtop",top+"px");pg.style.setProperty("--qbot",bot+"px")}
+  // الصفحة بإطار رفيع ١٢ من كل جهة، وجوّاه: اسم السورة فوق، الـ١٥ سطر، ورقم الصفحة تحت بالنص
+  const top=sat+46,bot=sab+48,lh=(H-top-bot)/15,fs=Math.min((W-44)/17.4,lh/1.5);
+  for(const [k,v] of [["--qw",W],["--qh",H],["--qlh",lh],["--qfs",fs],["--qtop",top],["--qbot",bot]])pg.style.setProperty(k,v+"px");barH()}
+const fsz=()=>{const v=+((api&&api.cfg().qFs)||FS0);return v>=FSMIN&&v<=FSMAX?v:FS0};
 function ensure(){if(pg)return;pg=document.createElement("section");pg.id="qrPg";pg.hidden=true;pg.setAttribute("aria-label","القرآن الكريم");
-  pg.innerHTML=`<div id="qrV"></div>
-  <div class="qr-top" hidden><button class="qr-b" data-qx>→ <span id="qrZ"></span></button><b id="qrS"></b><button class="qr-b" data-qi>الفهرس</button></div>
-  <div class="qr-bot" hidden><span id="qrN"></span><small id="qrG"></small></div><div class="qr-toast" id="qrT" hidden></div>`;
-  document.body.appendChild(pg);V=$("#qrV",pg);V.innerHTML=Array.from({length:604},(_,i)=>`<div class="qs" data-p="${i+1}"></div>`).join("");
-  V.addEventListener("scroll",onScroll,{passive:true});wire();addEventListener("resize",()=>{if(isOpen()){const p=cur;geom();go(p,true)}})}
+  pg.innerHTML=`<div id="qrV"></div><div id="qrR"></div>
+  <div class="qr-top"><button class="qr-c" data-qx aria-label="رجوع">‹</button><div class="qr-t"><b id="qrS"></b><small id="qrSub"></small></div><button class="qr-m" data-qm id="qrM"></button></div>
+  <div class="qr-bot" hidden><span id="qrN"></span><small id="qrG"></small></div><div class="qr-hint" id="qrHint" hidden>اسحب يمين ويسار تقلب</div><div class="qr-toast" id="qrT" hidden></div>`;
+  document.body.appendChild(pg);V=$("#qrV",pg);RV=$("#qrR",pg);
+  V.innerHTML=Array.from({length:604},(_,i)=>`<div class="qs" data-p="${i+1}"></div>`).join("");
+  RV.innerHTML=Array.from({length:114},(_,i)=>`<div class="qsu" data-s="${i}"></div>`).join("");
+  V.addEventListener("scroll",onScroll,{passive:true});RV.addEventListener("scroll",onRScroll,{passive:true});
+  RV.addEventListener("scroll",onVScroll,{passive:true,capture:true});
+  ["pointerdown","touchstart"].forEach(k=>pg.addEventListener(k,()=>{dragging=true},{passive:true}));
+  ["pointerup","pointercancel","touchend","touchcancel"].forEach(k=>pg.addEventListener(k,()=>{dragging=false},{passive:true}));
+  wire();addEventListener("resize",()=>{if(rdOn()){geom();if(mode==="page")go(cur);else rgo(curS,null)}})}
 function isOpen(){return !!(pg&&!pg.hidden)}
-function curFromScroll(){return mode==="page"?Math.round(Math.abs(V.scrollLeft)/W)+1:Math.round(V.scrollTop/H)+1}
-function onScroll(){clearTimeout(scrT);scrT=setTimeout(()=>{const p=Math.max(1,Math.min(604,curFromScroll()));if(p!==cur)setCur(p)},mode==="page"?60:90)}
+const rdOn=()=>isOpen()&&stack.includes("rd");
+function onScroll(){if(mode!=="page")return;clearTimeout(scrT);scrT=setTimeout(()=>{const p=Math.max(1,Math.min(604,Math.round(Math.abs(V.scrollLeft)/W)+1));if(p!==cur)setCur(p)},60)}
 function setCur(p){const was=cur,now=Date.now();
   if(p===was+1&&now-enteredAt>=COUNT_MS)read(was);
-  cur=p;enteredAt=now;windowAt(p);barsText();if(Q()&&Q().fetch)try{Q().fetch(p)}catch(e){}
-  clearTimeout(saveT);saveT=setTimeout(()=>keep(cur,markP===cur?markA:-1,true),400)}
-function go(p,instant){p=Math.max(1,Math.min(604,p));cur=p;enteredAt=Date.now();
-  if(mode==="page")V.scrollLeft=-(p-1)*W;else V.scrollTop=(p-1)*H;windowAt(p);barsText()}
-function setMode(m){mode=m==="scroll"?"scroll":"page";pg.classList.toggle("scroll",mode==="scroll");pg.classList.toggle("paged",mode==="page");geom();go(cur,true)}
+  cur=p;enteredAt=now;windowAt(p);head();lockCheck();if(Q()&&Q().fetch)try{Q().fetch(p)}catch(e){}
+  if(markA>=0&&pageOfA(markA)!==p&&AY)markA=-1;
+  clearTimeout(saveT);saveT=setTimeout(()=>keep(cur,markA>=0?markA:(AY?firstOn(cur):-1)),500)}
+function go(p){p=Math.max(1,Math.min(604,p));cur=p;enteredAt=Date.now();V.scrollLeft=-(p-1)*W;windowAt(p);head()}
+// السحب يمين/يسار بـ«آية تحت آية»: السورة اللي بعدها/قبلها (العنوان يتبدّل وياه)
+function onRScroll(e){if(mode!=="read"||e.target!==RV)return;const s=Math.max(0,Math.min(113,Math.round(Math.abs(RV.scrollLeft)/W)));
+  if(s!==curS){curS=s;head(s)}clearTimeout(scrT);scrT=setTimeout(()=>{rwindow(curS);vSettle()},80)}
+function onVScroll(e){if(mode!=="read"||e.target===RV||!e.target.classList||!e.target.classList.contains("qsu"))return;
+  if(bars&&e.target.scrollTop>40&&!lockO&&Date.now()-progAt>500)setBars(false);clearTimeout(vT);vT=setTimeout(vSettle,500)}
+// يوگف التمرير (نص ثانية): أول آية ظاهرة كاملة = الشريطة، والصفحات اللي عبرتها تنحسب
+function vSettle(){if(mode!=="read"||!AY)return;const g=firstSeen(),p=pageOfA(g),now=Date.now();
+  if(p>cur&&cur>0&&now-enteredAt>=COUNT_MS)for(let k=cur;k<p;k++)read(k);
+  if(p!==cur){cur=p;enteredAt=now}
+  head();lockCheck();keep(p,g)}
+function rgo(s,g,flash){curS=s;RV.scrollLeft=-s*W;rwindow(s);head(s);requestAnimationFrame(()=>{const el=rslot(s);if(!el)return;progAt=Date.now();if(g==null||g<0)el.scrollTop=0;else toAyah(g,flash);
+  const f=g!=null&&g>=0?g:D.s0[s];cur=pageOfA(f);enteredAt=Date.now();head()})}
 
-function open(page,a){if(!api)return;ensure();
-  const s=state(),p=page||s.page||1;markP=0;markA=-1;
-  if(a!=null&&a>=0){markP=p;markA=a}else if(!page&&s.a>=0){markP=s.page;markA=s.a}
-  pg.hidden=false;document.body.classList.add("qr-on");bars=false;showBars();
-  try{history.pushState({zq:1},"")}catch(e){}
+function setMode(m,keepPlace){const from=mode,g0=from==="read"&&AY?firstSeen():markA;mode=m==="page"?"page":"read";pg.classList.toggle("paged",mode==="page");pg.classList.toggle("reading",mode==="read");geom();
+  if(keepPlace===false)return;
+  if(mode==="page"){go(from==="read"&&AY?pageOfA(g0):cur)}
+  else{const g=markA>=0?markA:firstOn(cur);rgo(S0(g),g,false)}}
+
+/* ---------- الفتح والسد ---------- */
+function push(v){stack.push(v);try{history.pushState({zq:stack.length},"")}catch(e){}}
+// YQ.open(): الفهرس. YQ.open(page[, a]): القراءة على هالصفحة (أو الآية)
+function open(page,a){if(!api)return;ensure();const first=!isOpen();
+  pg.hidden=false;document.body.classList.add("qr-on");
+  if(first)setBars(true);
+  return both().then(()=>{if(page==null||page===0&&a==null){if(!stack.includes("idx"))push("idx");idxDraw();return}
+    reader(page,a)}).catch(()=>{api.toast("ما گدرت أفتح القرآن");close(true)})}
+function reader(page,a,flash){const s=state();page=page||s.page||1;
+  if(a==null||a<0)a=page===s.page&&s.a>=0?s.a:-1;markA=a!=null&&a>=0?a:-1;
+  if(!stack.includes("rd"))push("rd");idxHide();pg.classList.add("rd");
   if(Q())try{Q().keep(true)}catch(e){}
-  data().then(()=>{geom();mode=(api.cfg().qMode==="scroll")?"scroll":"page";pg.classList.toggle("scroll",mode==="scroll");pg.classList.toggle("paged",mode==="page");
-    go(p,true);if(markA>=0&&markP===p)setTimeout(()=>underline(p,markA),350);if(Q()&&Q().fetch)try{Q().fetch(p)}catch(e){}})
-    .catch(()=>{api.toast("ما گدرت أفتح المصحف");close(true)})}
-// المرة الجاية: الآية اللي وقفت عليها عليها خط رفيع لثانيتين
-function underline(p,a){const el=slot(p);if(!el)return;const s=$$(`[data-a="${a}"]`,el);s.forEach(x=>x.classList.add("ul"));setTimeout(()=>s.forEach(x=>x.classList.remove("ul")),2000)}
-// tellHistory=false: الرجوع جاي من زر الرجوع (popstate) فالخطوة انشالت
-function close(fromPop){if(!isOpen())return 0;keep(cur,markP===cur?markA:-1,false);
-  pg.hidden=true;document.body.classList.remove("qr-on");idxClose();if(Q())try{Q().keep(false)}catch(e){}
-  for(const [p,f] of faces){try{document.fonts.delete(f)}catch(e){}}faces.clear();$$(".qs",V).forEach(el=>{el.innerHTML="";delete el.dataset.g});
-  if(!fromPop){skipPop=1;try{history.back()}catch(e){skipPop=0}}
+  geom();pg.style.setProperty("--qrs",fsz()+"px");const m=api.cfg().qMode==="page"?"page":"read";
+  mode=m;pg.classList.toggle("paged",m==="page");pg.classList.toggle("reading",m==="read");
+  if(m==="page"){go(page);if(markA>=0)setTimeout(()=>flashA(markA),350);if(Q()&&Q().fetch)try{Q().fetch(page)}catch(e){}}
+  else{const g=markA>=0?markA:firstOn(page);rgo(S0(g),g,markA>=0||flash)}
+  setBars(true);hint()}
+// المرة الجاية: الآية اللي وقفت عليها تتظلّل خفيف لثانيتين
+function flashA(g){const el=slot(cur);if(!el)return;const s=$$(`[data-a="${g}"]`,el);s.forEach(x=>x.classList.add("ul"));setTimeout(()=>s.forEach(x=>x.classList.remove("ul")),2000)}
+function hint(){const c=api.cfg();if(c.qHint>=2)return;c.qHint=(c.qHint||0)+1;api.save();const h=$("#qrHint",pg);h.hidden=false;setTimeout(()=>h.hidden=true,3200)}
+function leaveReader(){if(!AY)return;const g=mode==="read"?firstSeen():(markA>=0?markA:firstOn(cur));keep(mode==="read"?pageOfA(g):cur,g);
+  if(Q())try{Q().keep(false)}catch(e){}pg.classList.remove("rd");menuClose()}
+// fromPop: الرجوع جاي من زر الرجوع/التبويب (الخطوة انشالت). غير هيچ نرجع كل خطواتنا بالـhistory
+function close(fromPop){if(!isOpen())return 0;if(lockO)return 0;if(stack.includes("rd"))leaveReader();const n=stack.length-(fromPop?1:0);
+  pg.hidden=true;document.body.classList.remove("qr-on");idxHide();dlyHide();stack=[];
+  for(const [p,f] of faces){try{document.fonts.delete(f)}catch(e){}}faces.clear();$$(".qs",V).forEach(el=>{el.innerHTML="";delete el.dataset.g});$$(".qsu",RV).forEach(el=>el.innerHTML="");
+  if(!fromPop&&n>0){skipPop=1;try{history.go(-n)}catch(e){skipPop=0}}
   if(window.YZ&&YZ.refresh)YZ.refresh();return 1}
+// رجوع التلفون: خطوة خطوة (الإعدادات، القراءة، الفهرس)
+function back(){if(skipPop){skipPop=0;return true}if(!isOpen())return false;if(lockO){try{history.pushState({zq:9},"")}catch(e){}return true}
+  if(menu&&!menu.hidden){menuClose()}
+  const v=stack.pop();if(v==="set"){dlyHide();if(stack[stack.length-1]==="idx")idxDraw();return true}
+  if(v==="rd"){leaveReader();if(stack.length){idxDraw();return true}}
+  if(!stack.length){close(true);return true}
+  if(stack[stack.length-1]==="idx")idxDraw();return true}
+const depth=()=>isOpen()?stack.length:0;
 
-/* ---------- الشريطين (دوسة) ---------- */
-function showBars(){$(".qr-top",pg).hidden=!bars;$(".qr-bot",pg).hidden=!bars;barsText()}
-function barsText(){if(!pg||!D)return;const z=window.YZ&&YZ.names?YZ.names():null;$("#qrZ",pg).textContent=(z&&z.z)||"زاد";
-  $("#qrS",pg).textContent=D.s[surahOfPage(cur)][0];$("#qrN",pg).textContent="صفحة "+ar(cur);$("#qrG",pg).textContent=goalLine()}
+/* ---------- الشريط فوق (دوسة تطلعه وتخفيه) ---------- */
+// طول الشريط الفوق (من فوق الشاشة لآخره): «آية تحت آية» تبدي من تحته
+function barH(){const t=pg&&$(".qr-top",pg);if(!t||t.hidden||!t.offsetHeight)return;const b=Math.ceil(t.getBoundingClientRect().bottom-pg.getBoundingClientRect().top);if(b>0)pg.style.setProperty("--qbar",b+"px")}
+function setBars(on){bars=on;if(!pg)return;$(".qr-top",pg).hidden=!on;if(on)barH();$(".qr-bot",pg).hidden=!on||!goalLine();head()}
+function head(sIdx){if(!pg||!D)return;const s=sIdx!=null?sIdx:mode==="read"?curS:surahOfPage(cur),p=mode==="read"&&sIdx!=null?(AY?pageOfA(D.s0[s]):cur):cur;
+  $("#qrS",pg).textContent=ar(s+1)+". "+D.s[s][0];
+  $("#qrSub",pg).textContent=`${MADANI.has(s+1)?"مدنية":"مكية"} · ${ar(D.s[s][2])} آية · صفحة ${ar(p)} · الجزء ${ar(juzOfPage(p))}`;
+  $("#qrM",pg).textContent=(mode==="page"?"صفحة صفحة":"آية تحت آية")+" ▾";
+  $("#qrN",pg).textContent="صفحة "+ar(p);$("#qrG",pg).textContent=goalLine()}
 function toast(t){const e=$("#qrT",pg);e.textContent=t;e.hidden=false;clearTimeout(e._t);e._t=setTimeout(()=>e.hidden=true,1600)}
+
+// زر ▾: «صفحة صفحة» / «آية تحت آية» (يتذكر)، وحجم الخط
+function menuOpen(){if(!menu){menu=document.createElement("div");menu.className="qr-menu";pg.appendChild(menu)}
+  menu.innerHTML=`${[["page","صفحة صفحة","صفحات المصحف"],["read","آية تحت آية","كتابة كبيرة تنزل بإصبعك"]].map(([k,l,d])=>`<button data-qmo="${k}" aria-pressed="${mode===k}"><b>${l}</b><small>${d}</small></button>`).join("")}
+  ${mode==="read"?`<div class="qr-fs"><button data-qf="-2">A-</button><span>${ar(fsz())}</span><button data-qf="2">A+</button></div>`:""}`;menu.hidden=false}
+function menuClose(){if(menu)menu.hidden=true}
 
 let lp=0,lpAt=0,px=0,py=0;
 function wire(){
-  V.addEventListener("pointerdown",e=>{px=e.clientX;py=e.clientY;clearTimeout(lp);const s=e.target.closest("[data-a]");if(!s)return;
+  pg.addEventListener("pointerdown",e=>{px=e.clientX;py=e.clientY;clearTimeout(lp);const s=e.target.closest("[data-a]");if(!s||!e.target.closest("#qrV,#qrR"))return;
     lp=setTimeout(()=>{lp=0;lpAt=Date.now();mark(+s.dataset.a)},550)});
-  V.addEventListener("pointermove",e=>{if(lp&&Math.hypot(e.clientX-px,e.clientY-py)>10){clearTimeout(lp);lp=0}});
-  ["pointerup","pointercancel"].forEach(k=>V.addEventListener(k,()=>{clearTimeout(lp);lp=0}));
-  V.addEventListener("contextmenu",e=>e.preventDefault());
-  V.addEventListener("click",()=>{if(Date.now()-lpAt<700)return;bars=!bars;showBars()});
-  pg.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
-    if(b.matches("[data-qx]")){close(false);return}
-    if(b.matches("[data-qi]")){idxOpen();return}});
-  document.addEventListener("visibilitychange",()=>{if(document.hidden&&isOpen())keep(cur,markP===cur?markA:-1,false)})}
-// ضغطة طويلة على آية: تتظلّل خفيف و«وقفت هنا»، وتنحفظ ويا الصفحة
-function mark(a){buzz(15);$$(".hl",V).forEach(x=>x.classList.remove("hl"));markP=cur;markA=a;
-  const el=slot(cur);if(el)$$(`[data-a="${a}"]`,el).forEach(x=>x.classList.add("hl"));
-  keep(cur,a,false);toast("وقفت هنا")}
+  pg.addEventListener("pointermove",e=>{if(lp&&Math.hypot(e.clientX-px,e.clientY-py)>10){clearTimeout(lp);lp=0}});
+  ["pointerup","pointercancel"].forEach(k=>pg.addEventListener(k,()=>{clearTimeout(lp);lp=0}));
+  pg.addEventListener("contextmenu",e=>{if(e.target.closest("#qrV,#qrR"))e.preventDefault()});
+  pg.addEventListener("click",e=>{const b=e.target.closest("button");
+    if(menu&&!menu.hidden&&!e.target.closest(".qr-menu")&&!(b&&b.matches("[data-qm]"))){menuClose();return}
+    if(!b){if(e.target.closest("#qrV,#qrR")&&Date.now()-lpAt>700&&Math.hypot(e.clientX-px,e.clientY-py)<10){setBars(!bars);menuClose()}return}
+    if(b.matches("[data-qx]")){history.back();return}
+    if(b.matches("[data-qm]")){if(menu&&!menu.hidden)menuClose();else menuOpen();return}
+    if(b.matches("[data-qmo]")){const m=b.dataset.qmo;menuClose();if(m===mode)return;api.cfg().qMode=m==="page"?"page":undefined;api.save();setMode(m);buzz(6);return}
+    if(b.matches("[data-qf]")){const v=Math.max(FSMIN,Math.min(FSMAX,fsz()+ +b.dataset.qf)),g=firstSeen();api.cfg().qFs=v===FS0?undefined:v;api.save();
+      pg.style.setProperty("--qrs",v+"px");menuOpen();requestAnimationFrame(()=>toAyah(g,false));buzz(6);return}});
+  document.addEventListener("visibilitychange",()=>{if(document.hidden)pause();else resume()})}
+// يطلع من التطبيق (وonPause بالتلفون): الشريطة على اللي يقراه هسه
+function pause(){if(!rdOn())return;const g=mode==="read"?firstSeen():(markA>=0?markA:firstOn(cur));keep(mode==="read"?pageOfA(g):cur,g)}
+// رجع للتطبيق (وonResume): إذا الودجت قلب الشريطة، نروح وياها
+function resume(){if(!rdOn())return;
+  const s=state(),k=s.page+":"+s.a;if(lastKept&&k!==lastKept){lastKept=k;const g=s.a>=0?s.a:firstOn(s.page);markA=s.a;
+    if(mode==="page")go(s.page);else rgo(S0(g),g,true)}
+  lockSync()}
+// ضغطة طويلة على آية: «وقفت هنا» وتنحفظ ويا الصفحة
+function mark(a){buzz(15);$$(".hl",pg).forEach(x=>x.classList.remove("hl"));markA=a;
+  $$(`#qrV [data-a="${a}"],#qrR .qa[data-a="${a}"]`,pg).forEach(x=>x.classList.add("hl"));
+  keep(mode==="read"?pageOfA(a):cur,a);toast("وقفت هنا")}
 
 /* ---------- الفهرس ---------- */
-const fold=s=>String(s).replace(/[ً-ْٰـ]/g,"").replace(/[أإآٱ]/g,"ا").replace(/ة/g,"ه").replace(/ى/g,"ي").trim();
-function idxOpen(){if(!D)return;if(!idx){idx=document.createElement("div");idx.className="qr-idx";pg.appendChild(idx)}
-  idx.hidden=false;idx.dataset.t=idx.dataset.t||"s";idxDraw();try{history.pushState({zq:2},"")}catch(e){}}
-function idxClose(){if(idx)idx.hidden=true}
-function idxDraw(){const s=state(),cs=surahOfPage(cur),cj=juzOfPage(cur),t=idx.dataset.t;
-  const list=t==="s"?D.s.map((x,i)=>`<button class="qi${i===cs?" on":""}" data-qp="${x[3]}"><span class="no">${ar(i+1)}</span><b>${esc(x[0])}</b><small>${ar(x[2])} آية</small><span class="pg">${ar(x[3])}</span></button>`).join("")
-    :D.j.map((x,i)=>`<button class="qi${i+1===cj?" on":""}" data-qp="${x[0]}"><span class="no">${ar(i+1)}</span><b>الجزء ${ar(i+1)}</b><small>${esc(D.s[x[1]-1][0])} ${ar(x[2])}</small><span class="pg">${ar(x[0])}</span></button>`).join("");
-  idx.innerHTML=`<div class="qi-top"><button class="qr-b" data-qc>✕</button><b>الفهرس</b><span></span></div>
-  <div class="qi-tabs"><button data-qt="s" aria-pressed="${t==="s"}">السور</button><button data-qt="j" aria-pressed="${t==="j"}">الأجزاء</button></div>
-  <label class="qi-q"><input id="qiQ" type="search" placeholder="اسم السورة أو رقم الصفحة" autocomplete="off"></label>
-  <div class="qi-l" id="qiL">${list}</div>
-  <div class="qi-set"><b>شلون تقرا</b><div class="seg">${[["page","صفحة صفحة"],["scroll","تمرير لتحت"]].map(([k,l])=>`<button data-qm="${k}" aria-pressed="${mode===k}">${l}</button>`).join("")}</div>
-  <b>قراءتي اليومية</b><div class="seg">${GOALS.map(([n,l])=>`<button data-qg="${n}" aria-pressed="${(s.goal||0)===n}">${l}</button>`).join("")}</div>
-  ${s.goal?`<p class="qi-g">${goalLine(s)}</p>`:""}
-  <p class="qi-src">${SRC}${Q()&&s.total?` · نازل ${ar(s.fonts)} من ${ar(s.total)}`:""}</p></div>`;
-  const q=$("#qiQ",idx);q.oninput=()=>{const v=fold(q.value);$$(".qi",idx).forEach(b=>b.hidden=false);if(!v)return;
-    if(/^[\d٠-٩]+$/.test(v)){const n=+v.replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d));$("#qiL",idx).innerHTML=n>=1&&n<=604?`<button class="qi" data-qp="${n}"><b>صفحة ${ar(n)}</b><small>${esc(D.s[surahOfPage(n)][0])}</small><span class="pg">${ar(n)}</span></button>`:`<p class="qi-g">من ١ لـ٦٠٤</p>`;return}
-    $$(".qi",idx).forEach(b=>{b.hidden=!fold($("b",b).textContent).includes(v)})};
-  idx.onclick=e=>{const b=e.target.closest("button");if(!b)return;
-    if(b.matches("[data-qc]")){history.back();return}
-    if(b.matches("[data-qt]")){idx.dataset.t=b.dataset.qt;idxDraw();return}
-    if(b.matches("[data-qm]")){api.cfg().qMode=b.dataset.qm==="scroll"?"scroll":undefined;api.save();setMode(b.dataset.qm);idxDraw();buzz(6);return}
-    if(b.matches("[data-qg]")){setGoal(+b.dataset.qg);idxDraw();barsText();buzz(6);return}
-    if(b.matches("[data-qp]")){const p=+b.dataset.qp;buzz(6);history.back();setTimeout(()=>go(p,true),30)}};
-  const on=$(".qi.on",idx);if(on)setTimeout(()=>on.scrollIntoView({block:"center"}),0)}
+const fold=s=>String(s).replace(/[ً-ٰٟـۖ-ۭ]/g,"").replace(/[أإآٱ]/g,"ا").replace(/ة/g,"ه").replace(/ى/g,"ي").replace(/\s+/g," ").trim();
+function idxEl(){if(!idx){idx=document.createElement("div");idx.className="qr-idx";pg.appendChild(idx)}return idx}
+function idxHide(){if(idx)idx.hidden=true}
+function contHtml(){const s=state();if(!s.at&&s.page<=1&&s.a<0)return"";const g=s.a>=0?s.a:firstOn(s.page);
+  return `<button class="qx-cont" data-qcont><small>كمّل القراءة</small><b>${esc(aname(g))}</b>${goalLine(s)?`<span class="g">${goalLine(s)}</span>`:""}<span class="go">‹</span></button>`}
+const dia=n=>`<span class="dia"><i>${ar(n)}</i></span>`;
+function idxDraw(){const el=idxEl();el.hidden=false;const t=el.dataset.t||"s",z=window.YZ&&YZ.names?YZ.names():null;
+  const list=t==="s"?D.s.map((x,i)=>`<button class="qi" data-qs="${i}">${dia(i+1)}<span class="tx"><b>${esc(x[0])}</b><small>${MADANI.has(i+1)?"مدنية":"مكية"} · ${ar(x[2])} آية</small></span><span class="pg">ص ${ar(x[3])}</span></button>`).join("")
+    :D.j.map((x,i)=>`<button class="qi" data-qp="${x[0]}">${dia(i+1)}<span class="tx"><b>الجزء ${ar(i+1)}</b><small>${esc(D.s[x[1]-1][0])} ${ar(x[2])}</small></span><span class="pg">ص ${ar(x[0])}</span></button>`).join("");
+  el.innerHTML=`<div class="qx-top"><button class="qx-z" data-qz>‹ ${esc((z&&z.z)||"زاد")}</button><h2>${esc((z&&z.q)||"القرآن الكريم")}</h2><button class="qx-g" data-qset aria-label="القراءة اليومية">⚙</button></div>
+  ${contHtml()}
+  <div class="qx-seg"><button data-qt="s" aria-pressed="${t==="s"}">السور ${ar(114)}</button><button data-qt="j" aria-pressed="${t==="j"}">الأجزاء ${ar(30)}</button></div>
+  <label class="qx-q"><input id="qiQ" type="search" placeholder="ابحث باسم السورة أو بكلمة" autocomplete="off"></label>
+  <div id="qiR"></div><div class="qx-l" id="qiL">${list}</div><p class="qi-src">${SRC}</p>`;
+  const q=$("#qiQ",el);let qt=0;q.oninput=()=>{clearTimeout(qt);qt=setTimeout(()=>search(q.value),180)};
+  el.onclick=idxClick;el.scrollTop=0}
+function idxClick(e){const b=e.target.closest("button");if(!b)return;
+  if(b.matches("[data-qz]")){history.back();return}
+  if(b.matches("[data-qset]")){buzz(6);push("set");dlyDraw();return}
+  if(b.matches("[data-qt]")){idx.dataset.t=b.dataset.qt;buzz(6);idxDraw();return}
+  if(b.matches("[data-qcont]")){buzz(8);const s=state();reader(s.page,s.a,true);return}
+  if(b.matches("[data-qs]")){buzz(6);const s=+b.dataset.qs;reader(D.s[s][3],D.s0[s]);return}
+  if(b.matches("[data-qp]")){buzz(6);const p=+b.dataset.qp;reader(p,firstOn(p));return}
+  if(b.matches("[data-qg]")){buzz(6);const g=+b.dataset.qg;reader(pageOfA(g),g,true);return}}
 
-// رجوع التلفون: الفهرس، بعدين المصحف (zad.js يسأل قبل خطواته)
-function back(){if(skipPop){skipPop=0;return true}if(idx&&!idx.hidden){idxClose();return true}if(isOpen()){close(true);return true}return false}
+/* ---------- البحث: بالسور وبكلام الآيات سوا، بدون نت ---------- */
+function sdata(){if(SF)return Promise.resolve(SF);if(!Sp)Sp=fetch("quran/s.json").then(r=>r.json()).then(j=>SF=j.a.map(fold)).catch(e=>{Sp=null;throw e});return Sp}
+function search(raw){const v=fold(raw),R=$("#qiR",idx),L=$("#qiL",idx),seg=$(".qx-seg",idx);
+  $$(".qi",L).forEach(b=>b.hidden=false);R.innerHTML="";seg.hidden=false;if(!v)return;
+  if(/^[\d٠-٩]+$/.test(v)){const n=+v.replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d));seg.hidden=true;L.querySelectorAll(".qi").forEach(b=>b.hidden=true);
+    R.innerHTML=n>=1&&n<=604?`<button class="qi" data-qp="${n}">${dia(n)}<span class="tx"><b>صفحة ${ar(n)}</b><small>${esc(D.s[surahOfPage(n)][0])}</small></span><span class="pg">ص ${ar(n)}</span></button>`:`<p class="qi-g">من ١ لـ٦٠٤</p>`;return}
+  $$(".qi",L).forEach(b=>{b.hidden=!fold($("b",b).textContent).includes(v)});
+  if(v.length<2)return;seg.hidden=true;
+  R.innerHTML=`<p class="qi-g">يدوّر بالآيات…</p>`;
+  // «الصبر» تلگى «الصبر» و«بالصبر» أول، وبعدها «صبر/اصبر/صبرا…» (نفس الكلمة بلا «ال»)
+  const v2=v.split(" ").map(w=>w.length>3&&w.startsWith("ال")?w.slice(2):w).join(" ");
+  sdata().then(F=>{if(fold($("#qiQ",idx).value)!==v)return;const hits=[],more=[];for(let g=0;g<F.length;g++){const k=F[g].indexOf(v);if(k>=0){hits.push([g,k,v]);continue}
+      if(v2!==v){const k2=F[g].indexOf(v2);if(k2>=0)more.push([g,k2,v2])}}
+    hits.push(...more);
+    const sn=$$(".qi:not([hidden])",L).length;
+    R.innerHTML=hits.length?`<p class="qx-h">الآيات · ${ar(hits.length)}${hits.length>80?" (أول ٨٠)":""}</p>`+hits.slice(0,80).map(([g,k,w])=>hitHtml(g,k,w)).join("")+(sn?`<p class="qx-h">السور</p>`:"")
+      :sn?"":`<p class="qi-g">ماكو «${esc(raw.trim())}» بالسور ولا بالآيات</p>`})
+    .catch(()=>{R.innerHTML=`<p class="qi-g">ما گدرت أفتح البحث</p>`})}
+// السطر: نص الآية بخط المصحف والكلمة معلّمة (نفس رقم الكلمة بالإملائي). إذا الكلمات ما تتطابق، يبين الإملائي والكلمة معلّمة
+function hitHtml(g,k,v){const s=S0(g),F=SF[g],uw=AY.w[g].split(" "),fw=F.split(" ");
+  const a=F.slice(0,k).split(" ").length-1,b=F.slice(0,k+v.length).split(" ").length-1;let line;
+  if(uw.length===fw.length){const lo=Math.max(0,a-4),hi=Math.min(uw.length,b+6);
+    line=`<span class="u">${lo?"… ":""}${uw.slice(lo,hi).map((w,i)=>i+lo>=a&&i+lo<=b?`<mark>${esc(w)}</mark>`:esc(w)).join(" ")}${hi<uw.length?" …":""}</span>`}
+  else{const lo=Math.max(0,k-40),hi=Math.min(F.length,k+v.length+50);line=`${lo?"…":""}${esc(F.slice(lo,k))}<mark>${esc(F.slice(k,k+v.length))}</mark>${esc(F.slice(k+v.length,hi))}${hi<F.length?"…":""}`}
+  return `<button class="qh" data-qg="${g}"><small>${esc(D.s[s][0])} · ${ar(g-D.s0[s]+1)}</small><p>${line}</p></button>`}
+
+/* ---------- «القراءة اليومية»: الإعدادات ---------- */
+function dlyHide(){if(dly)dly.hidden=true}
+const hm=m=>String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+const when=m=>m<300?"الليل":m<420?"بعد الفجر":m<720?"الصبح":m<1020?"الظهر":m<1170?"العصر والمغرب":"الليل";
+function dlyDraw(){if(!dly){dly=document.createElement("div");dly.className="qr-dly";pg.appendChild(dly)}idxHide();dly.hidden=false;const s=state(),d=daily(s),phone=!!(Q()&&Q().daily);
+  dly.innerHTML=`<div class="qx-top"><button class="qr-c" data-qdb aria-label="رجوع">‹</button><h2 class="s">القراءة اليومية</h2><span style="width:40px"></span></div>
+  <button class="qd-on" data-qdon aria-pressed="${d.on}"><span class="tx"><b>${d.on?"شغّال":"طافي"}</b><small>بالوقت، القرآن يطلع ويقفل التليفون لحد ما تخلص</small></span><i class="sw"></i></button>
+  <p class="qd-l">الساعة</p><label class="qd-t"><input type="time" id="qdT" value="${hm(d.m)}"><small>${when(d.m)}</small></label>
+  <p class="qd-l">المقدار</p><div class="qd-ch">${AMOUNTS.map(([n,l])=>`<button data-qdn="${n}" aria-pressed="${d.n===n}">${l}</button>`).join("")}</div>
+  <p class="qd-l">الأيام</p><div class="qd-ch dd">${DAYS.map((l,i)=>`<button data-qdd="${i}" aria-pressed="${d.days.includes(i)}">${l}</button>`).join("")}</div>
+  <button class="qd-try" data-qdtry>شوف شلون يطلع ‹</button>
+  <p class="qd-note">${phone?`تبدي من وين وقفت. «خلصت ✓» يشتغل لما توصل لآخر المقدار. المكالمات تشتغل دائماً، وللطوارئ: دوس مطوّل ١٠ ثواني على الزر الصغير بالزاوية.${s.guard===false?` <b>يحتاج إذن «إمكانية الوصول» حتى يرجعك للقرآن إذا طلعت.</b>`:""}`:"تشتغل بتطبيق «يومي» بالموبايل."}</p>
+  ${s.guard===false&&phone?`<button class="qd-perm" data-qdperm>اسمح بـ«إمكانية الوصول»</button>`:""}`;
+  dly.onclick=dlyClick;const t=$("#qdT",dly);t.onchange=()=>{const m=/^(\d\d):(\d\d)$/.exec(t.value);if(!m)return;const x=daily();x.m=+m[1]*60+ +m[2];setDaily(x);dlyDraw()}}
+function dlyClick(e){const b=e.target.closest("button");if(!b)return;const d=daily();
+  if(b.matches("[data-qdb]")){history.back();return}
+  if(b.matches("[data-qdon]")){d.on=!d.on;setDaily(d);buzz(8);dlyDraw();if(d.on)askGuard();return}
+  if(b.matches("[data-qdn]")){d.n=+b.dataset.qdn;setDaily(d);buzz(6);dlyDraw();return}
+  if(b.matches("[data-qdd]")){const i=+b.dataset.qdd;d.days=d.days.includes(i)?d.days.filter(x=>x!==i):[...d.days,i].sort();if(!d.days.length)return;setDaily(d);buzz(6);dlyDraw();return}
+  if(b.matches("[data-qdperm]")){guardSheet();return}
+  if(b.matches("[data-qdtry]")){buzz(8);if(Q()&&Q().lockTest){try{Q().lockTest()}catch(x){}setTimeout(lockSync,250)}else lockStart({start:state().page,need:d.n,test:1});return}}
+// إذن «إمكانية الوصول»: مرة وحدة، ونفهّمه ليش
+function askGuard(){const s=state();if(s.guard!==false||api.cfg().qgAsk)return;api.cfg().qgAsk=1;api.save();guardSheet()}
+function guardSheet(){api.show(`<h3>إذن وحيد</h3><p class="zd-dmsg" style="line-height:1.9">حتى ما تطلع من القرآن لحد ما تخلص، «يومي» يحتاج «إمكانية الوصول». ما يقرا شي من شاشتك ولا يكتب: بس إذا فتحت تطبيق ثاني وقت القراءة يرجعك للقرآن. المكالمات تشتغل عادي.<br>بالإعدادات: <b>التطبيقات المثبتة ← يومي ← شغّل</b>. إذا طلع رمادي: معلومات التطبيق ← ⋮ ← «السماح بالإعدادات المقيدة».</p><button class="zd-sv" id="qgGo">افتح الإعدادات</button><button class="close" data-x>بعدين</button>`);
+  $("#qgGo",$("#sheet")).onclick=()=>{api.hide();try{Q().guard()}catch(e){}}}
+
+/* ---------- «القراءة اليومية»: وقت القراءة (فوق القفل) ---------- */
+function lockSync(){if(!Q()||!Q().lock)return;let L=null;try{L=JSON.parse(Q().lock()||"null")}catch(e){}
+  if(L&&L.on&&!lockO)lockStart(L);else if((!L||!L.on)&&lockO&&!lockO.test)lockStop(false)}
+function lockStart(L){if(!api)return;lockO={start:L.start||state().page,need:L.need||1,test:!!L.test,ok:false};lockO.end=Math.min(604,lockO.start+lockO.need-1);
+  if(window.YZ&&!YZ.isOpen())YZ.open();ensure();pg.hidden=false;document.body.classList.add("qr-on","qr-lock");dlyHide();idxHide();
+  both().then(()=>{lockO.endG=lastOn(lockO.end);reader(lockO.start,state().a);lockUi();lockCheck()})}
+function lockUi(){if(!lockEl){lockEl=document.createElement("div");lockEl.className="qr-lk";pg.appendChild(lockEl)}lockEl.hidden=false;
+  lockEl.innerHTML=`<button class="qr-sos" data-qsos aria-label="طوارئ: دوس مطوّل ١٠ ثواني"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15"/><circle class="r" cx="18" cy="18" r="15"/></svg><i>!</i></button>
+  <div class="qr-lb"><span id="qrLn"></span><button id="qrDone" disabled>خلصت ✓</button>${lockO.test?`<button class="qr-lt" data-qlt>سد التجربة</button>`:""}</div>`;
+  const sos=$("[data-qsos]",lockEl);let t=0;const stop=()=>{clearTimeout(t);sos.classList.remove("hold")};
+  sos.onpointerdown=e=>{e.preventDefault();sos.classList.add("hold");t=setTimeout(()=>{stop();buzz([40,60,40]);lockStop(false,true)},10000)};
+  ["pointerup","pointerleave","pointercancel"].forEach(k=>sos.addEventListener(k,stop));sos.oncontextmenu=e=>e.preventDefault();
+  $("#qrDone",lockEl).onclick=()=>{if(!lockO||!lockO.ok)return;buzz([20,30,40]);lockStop(true)};
+  const lt=$("[data-qlt]",lockEl);if(lt)lt.onclick=()=>lockStop(false,true);
+  $(".qr-top [data-qx]",pg).hidden=true}
+// «خلصت ✓» يشتغل بس لما توصل لآخر الكمية
+function lockCheck(){if(!lockO||!lockEl||!AY)return;let ok=false;
+  if(mode==="page")ok=cur>=lockO.end;
+  else{const el=rslot(curS),a=el&&$(`.qa[data-a="${lockO.endG}"]`,el);if(S0(lockO.endG)<curS)ok=true;else if(a){const r=a.getBoundingClientRect();ok=r.bottom<=el.getBoundingClientRect().bottom-8}}
+  if(!lockO.ok&&ok)buzz(10);lockO.ok=lockO.ok||ok;const left=Math.max(0,lockO.end-Math.max(cur,lockO.start)+(lockO.ok?0:1));
+  $("#qrLn",lockEl).textContent=lockO.ok?"وصلت آخر المقدار":`الباقي ${left<=1?"هالصفحة":ar(left)+" صفحات"} · لحد صفحة ${ar(lockO.end)}`;
+  $("#qrDone",lockEl).disabled=!lockO.ok}
+function lockStop(done,sos){const o=lockO;lockO=null;if(lockEl)lockEl.hidden=true;document.body.classList.remove("qr-lock");if(pg)$(".qr-top [data-qx]",pg).hidden=false;
+  if(done&&o){for(let p=o.start;p<=o.end;p++)read(p)}
+  if(Q()&&Q().lockEnd)try{Q().lockEnd(!!done)}catch(e){}
+  if(done)toast("تقبّل الله ✓");else if(sos)toast("طلعت")}
 
 /* ---------- المصدر: سطر بالفهرس وبالإعدادات ---------- */
-const SRC="خطوط القرآن من Quran Foundation · مصحف المدينة النبوية (مجمع الملك فهد) · ترتيب الصفحات من QUL";
+const SRC="خطوط القرآن من Quran Foundation · مصحف المدينة النبوية (مجمع الملك فهد) · ترتيب الصفحات من QUL · نص البحث من مجمع الملك فهد";
 function srcHtml(){return `<p class="meta qi-src2">خطوط القرآن من Quran Foundation</p>`}
 
 /* ---------- كارت «كمّل القراءة» بـ«زاد» ---------- */
-function cardHtml(){const s=state();if(!D){data().then(()=>{if(window.YZ&&YZ.refresh)YZ.refresh()}).catch(()=>{});return""}
-  if(!s.at&&s.page<=1)return"";const g=goalLine(s);
-  return `<button class="zd-qc" data-zqc="${s.page}"><small>كمّل القراءة</small><b>${esc(D.s[surahOfPage(s.page)][0])} · صفحة ${ar(s.page)}</b>${g?`<span class="g">${g}</span>`:""}<span class="ar">‹</span></button>`}
+function cardHtml(){const s=state();if(!D||!AY){both().then(()=>{if(window.YZ&&YZ.refresh)YZ.refresh()}).catch(()=>{});return""}
+  if(!s.at&&s.page<=1&&s.a<0)return"";const g=goalLine(s),a=s.a>=0?s.a:firstOn(s.page);
+  return `<button class="zd-qc" data-zqc="${s.page}"><small>كمّل القراءة</small><b>${esc(aname(a))}</b>${g?`<span class="g">${g}</span>`:""}<span class="ar">‹</span></button>`}
 
 function init(o){api=o;const P=new URLSearchParams(location.search),q=P.get("quran");
-  if(q){const a=P.get("a");["quran","a"].forEach(x=>P.delete(x));history.replaceState(null,"",location.pathname+(P.toString()?"?"+P:""));
-    setTimeout(()=>{if(window.YZ)YZ.open();open(+q||0,a!=null?+a:null)},0)}}
-const depth=()=>isOpen()?1+(idx&&!idx.hidden?1:0):0;
-window.YQ={init,open,close,isOpen,back,depth,cardHtml,state,srcHtml};
+  if(P.has("widgetsync"))return;
+  if(q!=null){const a=P.get("a");["quran","a","qlock"].forEach(x=>P.delete(x));history.replaceState(null,"",location.pathname+(P.toString()?"?"+P:""));
+    setTimeout(()=>{if(window.YZ)YZ.open();if(q==="i")open();else open(+q||state().page||1,a!=null?+a:null)},0)}
+  setTimeout(lockSync,300);document.addEventListener("visibilitychange",()=>{if(!document.hidden)lockSync()})}
+window.YQ={init,open,close,isOpen,back,depth,cardHtml,state,srcHtml,lock:lockSync,pause,resume};
 })();
-

@@ -81,7 +81,9 @@ html:has(body.zd-on){overscroll-behavior:none}
 /* كتابة الزيارة/الدعاء المضافة: أميري، والسطر الحالي يتظلّل إذا بيها أوقات [12:40] */
 .zd-rt{display:flex;justify-content:space-between;align-items:center;padding:12px 0 4px;font-size:11.5px;color:var(--f2);border-top:1px solid var(--gb);margin-top:14px}
 .zd-rt .fs button{width:32px;height:30px;border-radius:8px;border:1px solid var(--gb);margin-right:4px;font-size:12px;color:var(--fg)}
-.zd-duaa .zd-para{font:400 calc(var(--zfz,17px) + 3px)/2.1 Amiri,"Noto Naskh Arabic",serif;text-align:center;color:var(--fg);padding:6px 8px;border-radius:10px;white-space:pre-line;transition:color .3s,background .3s}
+/* تعديل القرآن ٢: خط القراءة الوحيد بـ«زاد»، الزيارات والأدعية والمجالس سوا (نفس الخط والحجم والتباعد، A- A+ وحدة) */
+.zd-read{font:400 calc(var(--zfz,17px) + 3px)/2.1 Amiri,"Noto Naskh Arabic",serif}
+.zd-duaa .zd-para{text-align:center;color:var(--fg);padding:6px 8px;border-radius:10px;white-space:pre-line;transition:color .3s,background .3s}
 .zd-duaa.sync .zd-para{color:var(--f3);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.zd-duaa.sync .zd-para.past{color:var(--f2)}.zd-duaa.sync .zd-para.cur{color:var(--fg);background:var(--f4)}
 .zd-del{margin-top:22px;width:100%;height:46px;border-radius:14px;color:var(--f2);font-size:13.5px}
 /* صفحة القراءة */
@@ -93,7 +95,7 @@ body.zd-rdo .dock,body.zd-rdo .y-micb{display:none}
 .zd-page{flex:1;overflow-y:auto;padding:18px 22px calc(var(--sab) + 60px);-webkit-user-select:text;user-select:text;overscroll-behavior:contain}
 .zd-page h2{font:600 21px/1.6 "Noto Naskh Arabic",serif;text-align:center}
 .zd-page .sub{text-align:center;font-size:11.5px;color:var(--f2);margin:2px 0 16px}
-.zd-txt{font:400 var(--zfz,17px)/2.05 "Noto Naskh Arabic",serif;text-align:justify;white-space:pre-line;word-wrap:break-word}
+.zd-txt{text-align:justify;white-space:pre-line;word-wrap:break-word}
 .zd-txt .u{text-decoration:underline;text-decoration-color:var(--zred);text-decoration-thickness:2px;text-underline-offset:6px}
 .zd-txt .h{background:var(--zhl);border-radius:3px}
 .zd-txt .s{border-bottom:1.5px solid var(--fg)}
@@ -155,3 +157,25 @@ body.zd-rdo .dock,body.zd-rdo .y-micb{display:none}
 .yw-s[aria-pressed="true"] .swi{background:var(--fg)}
 .yw-s[aria-pressed="true"] .swi::after{right:19px;background:var(--inv);opacity:1}
 .yw-ask{color:var(--fg)!important;padding:8px 0;font-size:12.5px}
+
+/* تعديل القرآن ٢: تعديل كتابة المجلس بنفس مكانها ونفس الخط */
+.zd-edt{display:block;width:100%;min-height:50vh;border:0;outline:0;resize:none;padding:0;margin:0;background:transparent;color:inherit;font-size:inherit;text-align:justify;overflow:hidden;caret-color:var(--zred,#e5484d)}
+#zdRd.zd-editing .zd-txt{background:var(--f4,rgba(127,127,127,.08));border-radius:12px;padding:8px 10px;margin:0 -10px}
+#zdRd.zd-editing .zd-endp{display:none}#zdRd.zd-editing .zd-page{padding-bottom:calc(var(--sab) + 110px)}
+.zd-edb{position:absolute;left:0;right:0;bottom:0;display:flex;gap:10px;padding:10px 16px calc(var(--sab) + 12px);background:var(--zpaper);border-top:1px solid var(--gb);z-index:3}
+.zd-edb .zd-sv{flex:1;margin:0}.zd-edc{flex:none;padding:0 20px;height:48px;border-radius:14px;border:1px solid var(--gb);color:var(--fg);font-size:15px}
+/* تعديل القرآن ٢ «＋ كذا مجلس»: تشوفهن قبل لا ينزلن */
+.zd-bl{display:flex;flex-direction:column;gap:8px;margin-top:12px;max-height:52vh;overflow-y:auto;overscroll-behavior:contain}
+.zd-br{border:1px solid var(--gb);border-radius:14px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.zd-bt{width:100%;border:0;background:transparent;color:var(--fg);font:600 15px/1.5 inherit;padding:2px 0;outline:0;border-bottom:1px solid transparent}
+.zd-bt:focus{border-bottom-color:var(--f3)}
+.zd-bm{display:flex;align-items:center;gap:8px}
+.zd-bi{font-size:14px;flex:none}.zd-bi.off{opacity:.22;filter:grayscale(1)}
+.zd-bm select{flex:1;min-width:0;height:32px;border-radius:10px;border:1px solid var(--gb);background:var(--f4,transparent);color:var(--fg);font-size:12.5px;padding:0 8px}
+.zd-bd{font-size:11.5px;color:var(--f2);flex:none}
+.zd-bx{flex:none;width:32px;height:32px;border-radius:10px;color:var(--f2);font-size:13px}
+.zd-bw{width:100%;margin-top:8px}
+.zd-bp{height:6px;border-radius:3px;background:var(--f4,rgba(127,127,127,.15));overflow:hidden;margin-top:16px}.zd-bp i{display:block;height:100%;width:0;background:var(--fg);transition:width .3s}
+.zd-bk-w{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--f2);padding:18px 0}
+.zd-bk-w i{width:16px;height:16px;border-radius:50%;border:2px solid var(--f3);border-top-color:var(--fg);animation:zdspin .8s linear infinite}
+@keyframes zdspin{to{transform:rotate(360deg)}}

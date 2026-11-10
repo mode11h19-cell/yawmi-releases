@@ -7,18 +7,41 @@
 body.qr-on{overflow:hidden}
 #qrV{position:absolute;inset:0;overscroll-behavior:contain;scrollbar-width:none}
 #qrV::-webkit-scrollbar{display:none}
-/* صفحة صفحة: سحب مثل الكتاب، الصفحة ١ أول شي من اليمين */
+/* صفحة صفحة: سحب مثل الكتاب، الصفحة ١ أول شي من اليمين. الصفحة اللي قبل واللي بعد مرسومات (quran.js windowAt) */
+#qrPg:not(.rd) #qrV,#qrPg:not(.rd) #qrR,#qrPg.reading #qrV,#qrPg.paged #qrR{display:none}
 #qrPg.paged #qrV{display:flex;flex-direction:row;direction:rtl;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory}
 #qrPg.paged .qs{flex:0 0 var(--qw);width:var(--qw);height:var(--qh);scroll-snap-align:start;scroll-snap-stop:always}
-/* تمرير لتحت: وحدة تحت الثانية بفاصل رفيع */
-#qrPg.scroll #qrV{overflow-y:auto;overflow-x:hidden}
-#qrPg.scroll .qs{height:var(--qh);border-bottom:1px solid var(--qline)}
+/* آية تحت آية: كل سورة صفحة تنزل بيها، والسحب يمين/يسار يبدّل السورة */
+#qrR{position:absolute;inset:0;display:flex;flex-direction:row;direction:rtl;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior:contain;scrollbar-width:none}
+#qrR::-webkit-scrollbar{display:none}
+.qsu{flex:0 0 var(--qw);width:var(--qw);height:var(--qh);scroll-snap-align:start;scroll-snap-stop:always;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;contain:strict;scrollbar-width:none}
+.qsu::-webkit-scrollbar{display:none}
+.qsu-in{padding:calc(var(--qbar,calc(var(--sat) + 66px)) + 6px) 16px calc(var(--sab) + 110px);direction:rtl}
+/* شريط اسم السورة: إطارين بأطراف مدببة ومعيّن بكل جهة (quran-structure.html) */
+.qband{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--qink)}
+.qband svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.qband path{fill:none;stroke:currentColor;stroke-width:1;vector-effect:non-scaling-stroke}
+.qband i{position:absolute;top:50%;width:.34em;height:.34em;border:1px solid currentColor;opacity:.45;transform:translateY(-50%) rotate(45deg)}
+.qband i:first-of-type{right:13%}.qband i:last-of-type{left:13%}
+.qband span{position:relative;line-height:1}
+.qsh{height:calc(var(--qrs,28px)*1.5);font:400 calc(var(--qrs,28px)*.8)/1 "QH",serif;margin:0 0 6px}
+.qbs{text-align:center;font:400 calc(var(--qrs,28px)*.92)/2.1 "QH",serif;margin:6px 0 2px}
+.qtx{font:400 var(--qrs,28px)/2.15 "QH",serif;text-align:justify;text-align-last:right;margin:0;color:var(--qink);word-spacing:.04em}
+.qa{border-radius:6px;transition:background-color .25s}
+.qa .qn{white-space:nowrap}
+.qa.hl{background:var(--qhl)}
+.qa.fl{background:var(--qhl);box-shadow:0 0 0 .1em var(--qhl);transition:background-color 1.2s,box-shadow 1.2s}.qa.fl.off{background:transparent;box-shadow:none}
+.qpb{display:flex;align-items:center;gap:10px;margin:10px 0;color:var(--qmut);font:400 11.5px/1 "IBM Plex Sans Arabic",system-ui,sans-serif}
+.qpb::before,.qpb::after{content:"";flex:1;height:1px;background:var(--qline)}
+.qnx{text-align:left;margin-top:28px;color:var(--qmut);font:400 13px/1 "IBM Plex Sans Arabic",system-ui,sans-serif}
 .qs{position:relative;contain:strict}
-.qpg{position:absolute;inset:0;padding:var(--qtop) 8px var(--qbot);display:flex;flex-direction:column;direction:rtl}
+.qpg{position:absolute;inset:0;padding:var(--qtop) 22px var(--qbot);display:flex;flex-direction:column;direction:rtl}
+/* إطار الصفحة: خط ١dp بلون الكتابة بشفافية ٣٠٪، ١٢dp من كل جهة */
+.qpg::before{content:"";position:absolute;top:calc(var(--sat) + 12px);bottom:calc(var(--sab) + 12px);left:12px;right:12px;border:1px solid color-mix(in srgb,var(--qink) 30%,transparent);pointer-events:none}
 /* فوق: اسم السورة برقمها. تحت: الجزء · رقم الصفحة بإطار بيضوي · الحزب */
-.qhd{position:absolute;top:calc(var(--qtop) - 24px);right:16px;left:16px;display:flex;justify-content:center;font:500 12px/1 "IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--qmut)}
+.qhd{position:absolute;top:calc(var(--qtop) - 26px);right:24px;left:24px;display:flex;justify-content:center;font:500 12px/1 "IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--qmut)}
 .qhd i{font-style:normal;margin-inline-start:4px}
-.qft{position:absolute;bottom:calc(var(--qbot) - 27px);left:16px;right:16px;display:flex;justify-content:space-between;align-items:center;font:400 11.5px/1 "IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--qmut)}
+.qft{position:absolute;bottom:calc(var(--qbot) - 32px);left:24px;right:24px;display:flex;justify-content:space-between;align-items:center;font:400 11.5px/1 "IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--qmut)}
 .qft span{flex:1}.qft span:last-child{text-align:left}
 .qft .qno{flex:none;min-width:38px;padding:4px 10px;border:1px solid var(--qline);border-radius:50%;text-align:center;font-size:12px;color:var(--qink)}
 .qls{flex:1;display:flex;flex-direction:column;font-size:var(--qfs);color:var(--qink)}
@@ -30,46 +53,113 @@ body.qr-on{overflow:hidden}
 .ql span.ul{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.32em}
 .ql.tx{font-family:"QH",serif;font-size:.8em}
 .ql.sh{justify-content:center}
-.ql.sh span{display:block;width:100%;text-align:center;font:400 calc(var(--qfs)*.78)/1.9 "QH",serif;border:1px solid var(--qline);border-radius:4px}
+.ql.sh .qband{font:400 calc(var(--qfs)*.78)/1 "QH",serif;height:92%}
 .ql.bs{justify-content:center;font:400 calc(var(--qfs)*.86)/1 "QH",serif}
 .ql.e{visibility:hidden}
 .qwait{margin:auto;color:var(--qmut);font-size:22px}
-/* دوسة: شريط رفيع فوق وتحت */
+/* فوق: رجوع · اسم السورة وتحته (مكية/مدنية · الآيات · الصفحة · الجزء) · «▾» طريقة القراءة. دوسة تطلعه وتخفيه */
 .qr-top,.qr-bot{position:absolute;left:10px;right:10px;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  background:color-mix(in srgb,var(--qpaper) 90%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  border:1px solid var(--qline);border-radius:18px;padding:7px 8px;font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--qink)}
+.qr-top{top:calc(var(--sat) + 6px);direction:rtl}
+#qrPg:not(.rd) .qr-top,#qrPg:not(.rd) .qr-bot,#qrPg:not(.rd) .qr-hint{display:none}
+.qr-t{flex:1;min-width:0;text-align:center;display:flex;flex-direction:column;gap:2px}
+.qr-t b{font-size:15.5px;font-weight:600}.qr-t small{font-size:11px;color:var(--qmut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qr-c{width:38px;height:38px;border-radius:50%;border:1px solid var(--qline);color:var(--qink);font-size:20px;line-height:1;background:transparent;flex:none}
+.qr-c[hidden]{visibility:hidden;display:block}
+.qr-m{height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--qline);color:var(--qink);font-size:12.5px;background:transparent;flex:none;white-space:nowrap}
+.qr-menu{position:absolute;z-index:6;top:calc(var(--sat) + 62px);left:12px;width:min(260px,calc(100% - 24px));background:var(--qpaper);color:var(--qink);
+  border:1px solid var(--qline);border-radius:18px;padding:6px;box-shadow:0 12px 40px rgba(0,0,0,.18);font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;direction:rtl}
+.qr-menu[hidden]{display:none}
+.qr-menu>button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:10px 12px;border-radius:13px;color:var(--qink);background:transparent;text-align:right}
+.qr-menu>button b{font-size:14.5px;font-weight:600}.qr-menu>button small{font-size:11.5px;color:var(--qmut)}
+.qr-menu>button[aria-pressed="true"]{background:var(--qhl)}.qr-menu>button[aria-pressed="true"] b::after{content:" ✓"}
+.qr-fs{display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--qline);margin-top:6px;padding:8px 6px 2px;font-size:13px}
+.qr-fs button{height:34px;min-width:52px;border-radius:12px;border:1px solid var(--qline);color:var(--qink);background:transparent;font-size:13px}
+.qr-hint{position:absolute;z-index:3;left:50%;bottom:calc(var(--sab) + 26px);transform:translateX(-50%);padding:9px 16px;border-radius:999px;border:1px solid var(--qline);
+  background:color-mix(in srgb,var(--qpaper) 92%,transparent);color:var(--qmut);font:400 12.5px/1 "IBM Plex Sans Arabic",system-ui,sans-serif;white-space:nowrap;pointer-events:none}
+.qr-hint[hidden]{display:none}
+.qr-bot{position:absolute;left:10px;right:10px;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:10px;
   background:color-mix(in srgb,var(--qpaper) 88%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
   border:1px solid var(--qline);border-radius:16px;padding:6px 8px;font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--qink)}
-.qr-top{top:calc(var(--sat) + 6px)}
 .qr-bot{bottom:calc(var(--sab) + 8px);justify-content:center;flex-direction:column;gap:2px;padding:8px}
 .qr-top[hidden],.qr-bot[hidden]{display:none}
-.qr-top b{font-size:15px;font-weight:600}
 .qr-bot span{font-size:14px}.qr-bot small{font-size:11.5px;color:var(--qmut)}.qr-bot small:empty{display:none}
-.qr-b{height:34px;padding:0 12px;border-radius:12px;color:var(--qink);font-size:13.5px;background:transparent}
-.qr-b:active{background:var(--qhl)}
 .qr-toast{position:absolute;z-index:4;left:50%;bottom:calc(var(--sab) + 70px);transform:translateX(-50%);background:var(--qink);color:var(--qpaper);
   padding:9px 16px;border-radius:14px;font:500 13.5px/1 "IBM Plex Sans Arabic",system-ui,sans-serif}
 .qr-toast[hidden]{display:none}
-/* الفهرس */
-.qr-idx{position:absolute;inset:0;z-index:5;background:var(--qpaper);overflow-y:auto;overscroll-behavior:contain;direction:rtl;
-  padding:calc(var(--sat) + 10px) 16px calc(var(--sab) + 24px);font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--qink)}
-.qr-idx[hidden]{display:none}
-.qi-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.qi-top b{font-size:20px;font-weight:600}.qi-top span{width:34px}
-.qi-tabs,.qi-set .seg{display:flex;gap:4px;padding:3px;border:1px solid var(--qline);border-radius:14px}
-.qi-tabs button,.qi-set .seg button{flex:1;height:36px;border-radius:11px;font-size:13.5px;color:var(--qink);background:transparent}
-.qi-tabs button[aria-pressed="true"],.qi-set .seg button[aria-pressed="true"]{background:var(--qink);color:var(--qpaper)}
-.qi-q{display:block;margin:10px 0 4px}
-.qi-q input{width:100%;height:42px;border-radius:13px;border:1px solid var(--qline);background:transparent;color:var(--qink);padding:0 14px;font:inherit;font-size:15px;outline:0}
-.qi{display:flex;align-items:center;gap:12px;width:100%;min-height:52px;border-bottom:1px solid var(--qline);color:var(--qink);text-align:right;background:transparent}
+/* الفهرس (شكل «زاد»): كمّل · السور/الأجزاء · بحث · السور بمعيّن */
+.qr-idx,.qr-dly{position:absolute;inset:0;z-index:5;background:var(--bg);color:var(--fg);overflow-y:auto;overscroll-behavior:contain;direction:rtl;
+  padding:calc(var(--sat) + 12px) 16px calc(var(--sab) + 28px);font-family:"IBM Plex Sans Arabic",system-ui,sans-serif}
+.qr-idx[hidden],.qr-dly[hidden]{display:none}
+.qx-top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px}
+.qx-top h2{flex:1;font:600 25px/1.3 "IBM Plex Sans Arabic",system-ui,sans-serif;text-align:center}.qx-top h2.s{font-size:19px}
+.qx-z{height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--gb);background:var(--gl);color:var(--fg);font-size:13px}
+.qx-g{width:40px;height:40px;border-radius:50%;border:1px solid var(--gb);background:var(--gl);color:var(--fg);font-size:16px}
+.qr-dly .qr-c{border-color:var(--gb);background:var(--gl);color:var(--fg)}
+.qx-cont{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:100%;text-align:right;padding:16px 18px 16px 70px;margin-bottom:14px;
+  border-radius:22px;background:var(--fg);color:var(--inv)}
+.qx-cont small{font-size:12px;opacity:.6}.qx-cont b{font-size:19px;font-weight:600}.qx-cont .g{font-size:12px;opacity:.6}
+.qx-cont .go{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:44px;height:44px;border-radius:50%;background:var(--inv);color:var(--fg);display:grid;place-items:center;font-size:20px}
+.qx-seg{display:flex;gap:4px;padding:4px;border:1px solid var(--gb);background:var(--gl);border-radius:999px}
+.qx-seg[hidden]{display:none}
+.qx-seg button{flex:1;height:38px;border-radius:999px;font-size:13.5px;color:var(--f2);background:transparent}
+.qx-seg button[aria-pressed="true"]{background:var(--fg);color:var(--inv)}
+.qx-q{display:block;margin:12px 0 6px}
+.qx-q input{width:100%;height:46px;border-radius:999px;border:1px solid var(--gb);background:var(--gl);color:var(--fg);padding:0 18px;font:inherit;font-size:16px;outline:0}
+.qi{display:flex;align-items:center;gap:14px;width:100%;min-height:68px;border-bottom:1px solid var(--f4);color:var(--fg);text-align:right;background:transparent}
 .qi[hidden]{display:none}
-.qi .no{width:26px;color:var(--qmut);font-size:13px;text-align:center}
-.qi b{font-size:16.5px;font-weight:500}.qi small{flex:1;color:var(--qmut);font-size:12px}
-.qi .pg{color:var(--qmut);font-size:13px}
-.qi.on b{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:6px}
-.qi-set{margin-top:22px;display:flex;flex-direction:column;gap:8px}.qi-set>b{font-size:14px;font-weight:600;margin-top:6px}
-.qi-g{font-size:13px;color:var(--qmut);text-align:center;margin:4px 0}
-.qi-src{font-size:11px;color:var(--qmut);line-height:1.6;margin-top:10px;text-align:center}
+.qi .dia{flex:none;width:40px;height:40px;display:grid;place-items:center;position:relative}
+.qi .dia::before{content:"";position:absolute;inset:7px;border:1px solid var(--f3);border-radius:5px;transform:rotate(45deg)}
+.qi .dia i{font-style:normal;font-size:12.5px;color:var(--f2);position:relative}
+.qi .tx{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
+.qi b{font-size:17px;font-weight:500}.qi small{color:var(--f2);font-size:12px}
+.qi .pg{color:var(--f2);font-size:12.5px;white-space:nowrap}
+.qx-h{font-size:12px;color:var(--f2);margin:14px 2px 4px}
+.qh{display:block;width:100%;text-align:right;padding:12px 2px;border-bottom:1px solid var(--f4);color:var(--fg);background:transparent}
+.qh small{font-size:12px;color:var(--f2)}
+.qh p{margin-top:4px;font:400 15px/1.9 "IBM Plex Sans Arabic",system-ui,sans-serif}
+.qh p .u{font:400 20px/2 "QH",serif}
+.qh mark{background:var(--f4);color:var(--fg);border-radius:4px;box-shadow:0 0 0 2px var(--f4)}
+.qi-g{font-size:13px;color:var(--f2);text-align:center;margin:12px 0}
+.qi-src{font-size:11px;color:var(--f3);line-height:1.6;margin-top:16px;text-align:center}
 .qi-src2{font-size:12px;text-align:center;margin:14px 0 0}
+/* «القراءة اليومية» */
+.qd-on{display:flex;align-items:center;gap:12px;width:100%;padding:16px;border-radius:20px;border:1px solid var(--gb);background:var(--gl);color:var(--fg);text-align:right}
+.qd-on .tx{flex:1;display:flex;flex-direction:column;gap:3px}.qd-on b{font-size:16px;font-weight:600}.qd-on small{font-size:12px;color:var(--f2)}
+.qd-on .sw{flex:none;width:48px;height:28px;border-radius:999px;background:var(--f4);position:relative;transition:background .2s}
+.qd-on .sw::after{content:"";position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:var(--fg);transition:transform .2s}
+.qd-on[aria-pressed="true"] .sw{background:var(--fg)}.qd-on[aria-pressed="true"] .sw::after{background:var(--inv);transform:translateX(-20px)}
+.qd-l{font-size:12.5px;color:var(--f2);margin:20px 4px 8px}
+.qd-t{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-radius:20px;border:1px solid var(--gb);background:var(--gl)}
+.qd-t input{font:200 40px/1 Inter,system-ui,sans-serif;color:var(--fg);background:transparent;border:0;outline:0;direction:ltr;width:170px;color-scheme:light dark}
+.qd-t small{font-size:12px;color:var(--f2)}
+.qd-ch{display:flex;flex-wrap:wrap;gap:8px}
+.qd-ch button{height:40px;padding:0 16px;border-radius:999px;border:1px solid var(--gb);background:var(--gl);color:var(--fg);font-size:13.5px}
+.qd-ch.dd button{width:40px;padding:0}
+.qd-ch button[aria-pressed="true"]{background:var(--fg);color:var(--inv);border-color:var(--fg)}
+.qd-try,.qd-perm{margin-top:24px;width:100%;height:54px;border-radius:999px;background:var(--fg);color:var(--inv);font-size:15px;font-weight:600}
+.qd-perm{margin-top:10px;background:transparent;color:var(--fg);border:1px solid var(--gb)}
+.qd-note{font-size:12.5px;color:var(--f2);line-height:1.8;margin-top:14px;text-align:center}.qd-note b{color:var(--fg);font-weight:600}
+/* وقت القراءة: «خلصت ✓» تحت، وزر الطوارئ الصغير بالزاوية (دوسة مطوّلة ١٠ ثواني) */
+.qr-lk{position:absolute;inset:0;z-index:4;pointer-events:none}
+.qr-lk[hidden]{display:none}
+.qr-lb{pointer-events:auto;position:absolute;left:12px;right:12px;bottom:calc(var(--sab) + 12px);display:flex;align-items:center;gap:10px;padding:8px 8px 8px 14px;direction:rtl;
+  border-radius:999px;border:1px solid var(--qline);background:color-mix(in srgb,var(--qpaper) 92%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  font-family:"IBM Plex Sans Arabic",system-ui,sans-serif;color:var(--qink)}
+.qr-lb span{flex:1;font-size:12.5px;color:var(--qmut);padding-right:6px}
+.qr-lb button{height:42px;padding:0 20px;border-radius:999px;background:var(--qink);color:var(--qpaper);font-size:14px;font-weight:600}
+.qr-lb button:disabled{opacity:.28}
+.qr-lb .qr-lt{background:transparent;color:var(--qink);border:1px solid var(--qline);font-weight:400}
+.qr-sos{pointer-events:auto;position:absolute;left:8px;top:calc(var(--sat) + 70px);width:30px;height:30px;color:var(--qmut);background:transparent;opacity:.55;touch-action:none;-webkit-user-select:none;user-select:none}
+.qr-sos svg{position:absolute;inset:0;transform:rotate(-90deg)}.qr-sos circle{fill:none;stroke:var(--qline);stroke-width:2}
+.qr-sos circle.r{stroke:var(--qink);stroke-dasharray:95;stroke-dashoffset:95}
+.qr-sos.hold circle.r{stroke-dashoffset:0;transition:stroke-dashoffset 10s linear}
+.qr-sos i{position:relative;font:600 12px/30px Inter,sans-serif;font-style:normal}
+body.qr-lock .qr-top [data-qx]{visibility:hidden}
 /* كارت «كمّل القراءة» بـ«زاد» */
 .zd-qc{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;width:100%;text-align:right;padding:14px 16px 14px 44px;margin-bottom:12px;
   border-radius:20px;background:var(--gl);border:1px solid var(--gb);color:var(--fg)}
 .zd-qc small{font-size:12px;color:var(--f2)}.zd-qc b{font-size:17px;font-weight:600}.zd-qc .g{font-size:12px;color:var(--f2)}
 .zd-qc .ar{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--f3)}
+body.qr-on .scrim{z-index:41} /* الأسئلة (مثل إذن «القراءة اليومية») فوق القرآن */

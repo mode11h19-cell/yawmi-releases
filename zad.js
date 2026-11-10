@@ -143,7 +143,7 @@ function paras(t){const out=[];String(t||"").split("\n").forEach(l=>{const m=/^\
 function syncTimes(i,P){if(P.some(p=>p.t!=null)||!Z().sync)return;const S=J("sync",i.id)||[];if(S.length!==P.length)return;S.forEach((s,k)=>{if(s&&s.start>=0)P[k].t=s.start})}
 function duaaHtml(i){let t="";if(i.hasText)try{t=Z().text(i.id)||""}catch(e){}const P=paras(t);syncTimes(i,P);const sync=P.some(p=>p.t!=null);
   return `<div class="zd-rt"><span>${i.sync?"يضبط الكتابة…":sync?"الكتابة · تمشي ويا الصوت":"الكتابة"}</span><span class="fs"><button data-zf="-2">A-</button><button data-zf="2">A+</button></span></div>
-  <div class="zd-duaa${sync?" sync":""}" id="zdDu" style="--zfz:${fz()}px">${P.length?P.map((p,k)=>`<p class="zd-para" data-k="${k}"${p.t!=null?` data-t="${p.t}"`:""}>${esc(p.x)}</p>`).join(""):`<p class="zd-note">ناقصها الكتابة</p>`}</div>`}
+  <div class="zd-duaa${sync?" sync":""}" id="zdDu" style="--zfz:${fz()}px">${P.length?P.map((p,k)=>`<p class="zd-para zd-read" data-k="${k}"${p.t!=null?` data-t="${p.t}"`:""}>${esc(p.x)}</p>`).join(""):`<p class="zd-note">ناقصها الكتابة</p>`}</div>`}
 const fz=()=>{const v=+((api&&api.cfg().zfs)||17);return v>=15&&v<=23?v:17};
 
 function wireListen(id){const i=item(id);if(!i)return;const sc=$("#zdSc",pg);
@@ -200,8 +200,10 @@ let add=null; // {sec, kind, audio:{tmp,name,dur}, zipCb}
 function addSheet(s){if(!has()){api.toast(AN()?"حدّث التطبيق حتى تضيف":"الإضافة من تطبيق «يومي» بالموبايل");return}
   add={sec:s,kind:"zyara",audio:null};const a=s==="a";
   api.show(`<h3>${a?"إضافة زيارة أو دعاء":"محاضرة جديدة"}</h3>${a?`<div class="zd-chips">${[["zyara","زيارة"],["dua","دعاء"]].map(([k,l])=>`<button data-zk2="${k}" aria-pressed="${k==="zyara"}">${l}</button>`).join("")}</div>`:""}
-  <button class="zd-file zip" id="zdZip"><i>⧉</i><span><b style="font-weight:600">ملف مضغوط (zip)</b> · الصوت والكتابة سوا</span></button>
-  <p class="zd-hint">بالـzip تقدر تحط ${a?"وحدة أو كلهن":"محاضرة وحدة أو كلهن"}. سمّي الصوت والكتابة نفس الاسم، مثلاً «03 الصبر». الرقم يصير الترتيب، والاسم يصير العنوان.</p>
+  ${a||!Z().pickMany?`<button class="zd-file zip" id="zdZip"><i>⧉</i><span><b style="font-weight:600">ملف مضغوط (zip)</b> · الصوت والكتابة سوا</span></button>
+  <p class="zd-hint">بالـzip تقدر تحط ${a?"وحدة أو كلهن":"محاضرة وحدة أو كلهن"}. سمّي الصوت والكتابة نفس الاسم، مثلاً «03 الصبر». الرقم يصير الترتيب، والاسم يصير العنوان.</p>`
+  :`<button class="zd-file zip" id="zdMany"><i>＋</i><span><b style="font-weight:600">كذا مجلس</b> · zip، أو كذا صوت وكتابة سوا</span></button>
+  <p class="zd-hint">الصوت والكتابة اللي بنفس الاسم يصيرن مجلس واحد. الرقم بأول الاسم (إذا موجود) يصير الترتيب. وبالـzip كل مجلد مجلس. تشوفهن قبل لا ينزلن.</p>`}
   <p class="zd-sl">أو وحدة وحدة</p>
   ${inp("zdAt","العنوان (لازم)","","",120)}
   <button class="zd-file" id="zdAu"><i>♪</i><span>اختار الملف الصوتي من تليفونك</span></button>
@@ -210,7 +212,7 @@ function addSheet(s){if(!has()){api.toast(AN()?"حدّث التطبيق حتى �
   <button class="zd-sv" id="zdAs">احفظ</button>`);
   const sh=$("#sheet");
   $$("[data-zk2]",sh).forEach(b=>b.onclick=()=>{add.kind=b.dataset.zk2;$$("[data-zk2]",sh).forEach(x=>x.setAttribute("aria-pressed",x===b));buzz(6)});
-  $("#zdZip",sh).onclick=()=>{try{Z().pickZip(s,add.kind)}catch(e){}};
+  {const z=$("#zdZip",sh);if(z)z.onclick=()=>{try{Z().pickZip(s,add.kind)}catch(e){}};const m=$("#zdMany",sh);if(m)m.onclick=()=>{try{Z().pickMany()}catch(e){}}}
   $("#zdAu",sh).onclick=()=>{try{Z().pick("audio")}catch(e){}};
   $("#zdTf",sh).onclick=()=>{try{Z().pick("txt")}catch(e){}};
   $("#zdAs",sh).onclick=()=>{const t=$("#zdAt",sh).value.trim(),tx=$("#zdTx",sh).value;
@@ -219,6 +221,77 @@ function addSheet(s){if(!has()){api.toast(AN()?"حدّث التطبيق حتى �
     const r=J("add",JSON.stringify({sec:s,kind:add.kind,t,tmp:add.audio?add.audio.tmp:"",text:tx}));
     if(!r||!r.id){api.toast("ما انحفظت، جرّب مرة ثانية");return}
     buzz([20,30,40]);add=null;load();api.hide();draw();api.toast(r.miss?r.miss+" · انضافت":r.sync?"انضافت ✓ · يضبط الكتابة…":"انضافت ✓")}}
+/* ---------- «＋ كذا مجلس» (تعديل القرآن ٢): zip أو كذا ملف ← نطابق ← تشوفهن ← ينزلن بالخلفية ---------- */
+const ar=n=>String(n).replace(/[0-9]/g,d=>"٠١٢٣٤٥٦٧٨٩"[d]);
+const LEADN=/^\s*([0-9٠-٩]+)[\s._\-–)]*/;
+const bkFold=s=>String(s).replace(/[ً-ٰٟـ]/g,"").replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه");
+const bkKey=n=>bkFold(String(n).replace(LEADN,"").replace(/[_\-.]+/g," ")).replace(/\s+/g," ").trim().toLowerCase();
+const bkNo=n=>{const m=String(n).match(LEADN);return m&&String(n).replace(LEADN,"").trim()?+m[1].replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)):-1};
+const bkTitle=n=>{const t=String(n).replace(LEADN,"").replace(/_+/g," ").replace(/\s+/g," ").trim();return t||String(n).trim()};
+// الملفات ← المجالس: بالمجلد كل مجلد مجلس (إذا بيه أكثر من صوت، كل صوت ويا كتابته بالاسم)، وبرّه الصوت والكتابة بنفس الاسم سوا
+function bulkMatch(F){const G=new Map();F.forEach(f=>{const d=f.dir||"";if(!G.has(d))G.set(d,[]);G.get(d).push(f)});
+  const rows=[],dirs=[...G.keys()].filter(Boolean),root=dirs.length===1&&!G.has("")?dirs[0]:null; // zip بيه مجلد واحد بس، والملفات كلها جوّاه
+  for(const [d,fs] of G){const A=fs.filter(f=>f.kind==="a"),T=fs.filter(f=>f.kind==="t");
+    if(d&&d!==root&&A.length<=1){const nm=d.split("/").pop(),x=A[0]?T.find(t=>bkKey(t.name)===bkKey(A[0].name))||T[0]:T[0];
+      rows.push({t:bkTitle(nm),no:bkNo(nm),src:nm,a:A[0]||null,x:x||null});continue}
+    const used=new Set();
+    A.forEach(a=>{const x=T.find(t=>!used.has(t)&&bkKey(t.name)===bkKey(a.name));if(x)used.add(x);rows.push({t:bkTitle(a.name),no:bkNo(a.name),src:a.name,a,x:x||null})});
+    T.filter(t=>!used.has(t)).forEach(x=>rows.push({t:bkTitle(x.name),no:bkNo(x.name),src:x.name,a:null,x}))}
+  const nat=(p,q)=>p.src.localeCompare(q.src,"ar",{numeric:true});
+  return rows.sort((p,q)=>p.no>=0&&q.no>=0?p.no-q.no||nat(p,q):p.no>=0?-1:q.no>=0?1:nat(p,q))}
+let bk=null;
+async function bulkScanned(F){bk={F,rows:bulkMatch(F),T:F.filter(f=>f.kind==="t")};
+  if(!bk.rows.length){bk=null;api.hide();api.toast("ما لگيت صوت أو كتابة بالملفات");return}
+  bulkDraw();
+  // الـPDF: نطلّع كتابته هنا (pdf.js)، والسطر يتحدّث لما يخلص
+  const P=bk.T.filter(t=>t.pdf&&t.text==null);if(!P.length)return;
+  for(const t of P){try{t.text=await pdfText(Z().pdf(t.k))}catch(e){t.text="";t.bad=1}}
+  if(bk&&!bk.going)bulkDraw()}
+let pdfjs=null;
+function pdfText(b64){if(!b64)return Promise.reject(new Error("no pdf"));
+  // pdf.js من داخل التطبيق (/pdfjs/ ← assets، ZadBulk.lib): بلا إنترنت من أول مرة. الـworker يشتغل بنفس الصفحة (pdfjsWorker)
+  const js=u=>new Promise((ok,no)=>{const s=document.createElement("script");s.src=u;s.onload=ok;s.onerror=no;document.head.appendChild(s)});
+  if(!pdfjs)pdfjs=js("/pdfjs/pdf.worker.min.js").then(()=>js("/pdfjs/pdf.min.js")).then(()=>{window.pdfjsLib.GlobalWorkerOptions.workerSrc="/pdfjs/pdf.worker.min.js";return window.pdfjsLib})
+    .catch(e=>{pdfjs=null;throw new Error("pdf.js")});
+  return pdfjs.then(async L=>{const bin=atob(b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+    const doc=await L.getDocument({data:u}).promise;const out=[];
+    for(let p=1;p<=doc.numPages;p++){const c=await (await doc.getPage(p)).getTextContent();pdfLines(c.items).forEach(l=>out.push(l));out.push("")}
+    return out.join("\n").replace(/\n{3,}/g,"\n\n").trim()})}
+// الـPDF يحفظ الحروف العربية بترتيب الشاشة (من اليسار) وبأشكالها (ﻢﻴﺣﺮﻟا): نرتّب كل سطر من اليمين ونرجّعها حروف عادية
+function pdfLines(I){const L=[];I.filter(it=>it.str!==undefined&&it.transform).sort((a,b)=>b.transform[5]-a.transform[5]).forEach(it=>{
+    const y=it.transform[5],h=Math.max(1,it.height||Math.abs(it.transform[3])||10),l=L.find(l=>Math.abs(l.y-y)<h*.5);if(l)l.it.push(it);else L.push({y,h,it:[it]})});
+  return L.map(l=>{const rtl=l.it.reduce((n,it)=>n+(it.dir==="rtl"?it.str.length:-it.str.replace(/\s/g,"").length),0)>0,x=it=>it.transform[4],w=it=>it.width||0;
+    const A=l.it.slice().sort((a,b)=>rtl?x(b)+w(b)-(x(a)+w(a)):x(a)-x(b));let t="",prev=null;
+    A.forEach(it=>{if(prev){const gap=rtl?x(prev)-(x(it)+w(it)):x(it)-(x(prev)+w(prev));if(gap>l.h*.25&&!/\s$/.test(t)&&!/^\s/.test(it.str))t+=" "}t+=it.str;prev=it});
+    return t.normalize("NFKC").replace(/[ \t]+/g," ").trim()})}
+function bulkDraw(){if(!bk)return;const R=bk.rows,T=bk.T,taken=new Map();R.forEach((r,i)=>{if(r.x)taken.set(r.x,i)});
+  api.show(`<h3>كذا مجلس · ${ar(R.length)}</h3><p class="zd-dmsg">شيّك قبل لا تنزلهن: العنوان تغيّره من مكانه، والكتابة تختارها إذا ما لگيتها.</p>
+  <div class="zd-bl">${R.map((r,i)=>`<div class="zd-br"><input class="zd-bt" data-rt="${i}" value="${esc(r.t)}" maxlength="120" aria-label="العنوان">
+    <div class="zd-bm"><span class="zd-bi${r.a?"":" off"}" title="${r.a?esc(r.a.name):"بلا صوت"}">🔊</span><span class="zd-bi${r.x?"":" off"}">📄</span>
+    <select data-rx="${i}" aria-label="الكتابة"><option value="">${r.x?"بلا كتابة":"اختار كتابة…"}</option>${T.map((t,k)=>`<option value="${k}"${r.x===t?" selected":""}>${esc(t.name)}${t.pdf&&t.text==null?" (يقرا…)":t.bad?" (ما انقرت)":""}${taken.has(t)&&taken.get(t)!==i?" ·":""}</option>`).join("")}</select>
+    ${r.a&&r.a.dur?`<span class="zd-bd zd-n">${fmt(r.a.dur)}</span>`:""}<button class="zd-bx" data-rdel="${i}" aria-label="شيل">✕</button></div></div>`).join("")}</div>
+  <button class="zd-sv" id="zdBgo">نزّلهن كلهن</button>`);
+  const sh=$("#sheet");
+  $$("[data-rt]",sh).forEach(e=>e.oninput=()=>{R[+e.dataset.rt].t=e.value});
+  $$("[data-rx]",sh).forEach(e=>e.onchange=()=>{const i=+e.dataset.rx,t=e.value===""?null:T[+e.value];if(t)R.forEach(r=>{if(r.x===t)r.x=null});R[i].x=t;bulkDraw()});
+  $$("[data-rdel]",sh).forEach(e=>e.onclick=()=>{R.splice(+e.dataset.rdel,1);buzz(6);if(!R.length){bk=null;api.hide();return}bulkDraw()});
+  $("#zdBgo",sh).onclick=bulkGo}
+function bulkGo(){const R=bk.rows.filter(r=>r.a||r.x&&(r.x.text||r.x.pdf));if(!R.length){api.toast("ماكو صوت ولا كتابة");return}
+  if(R.some(r=>r.x&&r.x.pdf&&r.x.text==null)){api.toast("لحظة، دا أقرا الـPDF…");return}
+  const old=items("b"),same=r=>old.find(i=>bkKey(i.t)===bkKey(r.t)),dup=R.filter(same);
+  const go=how=>{const rows=[];R.forEach(r=>{const o=same(r);if(o&&how==="skip")return;
+      rows.push({t:r.t.trim()||"مجلس",a:r.a?r.a.k:"",text:r.x&&r.x.text||"",replace:o&&how==="replace"?o.id:""})});
+    if(!rows.length){bk=null;api.hide();api.toast("ما انضاف شي");return}
+    bk.going=rows.length;bulkAt(0,rows.length);try{Z().bulkAdd(JSON.stringify(rows))}catch(e){api.toast("ما گدرت")}};
+  if(!dup.length){go("both");return}
+  api.show(`<h3>${dup.length===1?`«${esc(dup[0].t)}» موجود`:`${ar(dup.length)} منهن أسماءهن موجودة`}</h3><p class="zd-dmsg">شسوي بيهن؟</p>
+  <button class="zd-sv" data-bd="replace">استبدل</button><button class="zd-nmb zd-bw" data-bd="skip">تخطّى</button><button class="zd-nmb zd-bw" data-bd="both">خليهم الاثنين</button>`);
+  $$("[data-bd]",$("#sheet")).forEach(b=>b.onclick=()=>go(b.dataset.bd))}
+// ينزلن بالخلفية: شريط يمشي، وتگدر تسد وتكمل
+function bulkAt(done,total){if(!bk||!bk.going)return;
+  if(!$("#zdBp"))api.show(`<h3>دا أنزّل المجالس</h3><div class="zd-bp"><i id="zdBp"></i></div><p class="zd-dmsg" id="zdBn"></p><button class="close" data-x>كمّل بالخلفية</button>`);
+  const p=$("#zdBp");if(p)p.style.width=Math.round(done/Math.max(1,total)*100)+"%";const n=$("#zdBn");if(n)n.textContent=`${ar(done)} من ${ar(total)}`;
+  if(done>=total){bk=null;load();if(isOpen())draw();setTimeout(()=>{if($("#zdBp"))api.hide()},500);buzz([20,30,40]);api.toast(total===1?"انضاف مجلس ✓":`انضافن ${ar(total)} مجالس ✓`)}}
 // النتيجة من التلفون (اختيار ملف، أو الـzip خلص)
 window.onYawmiZad=function(o){if(!o)return;const sh=$("#sheet");
   if(o.ev==="pick"&&o.ok&&sh&&add){if(o.what==="audio"){add.audio=o;const b=$("#zdAu",sh);if(b){b.classList.add("ok");b.innerHTML=`<i>♪</i><span>${esc(o.name)} · <span class="zd-n">${fmt(o.dur)}</span></span>`}
@@ -227,16 +300,19 @@ window.onYawmiZad=function(o){if(!o)return;const sh=$("#sheet");
   if(o.ev==="zip"){add=null;load();api.hide();if(isOpen())draw();
     if(!o.ok){api.toast("ما گدرت أفتح الملف");return}
     const m=(o.missing||[]).length;api.toast(o.added?(o.added===1?"انضافت وحدة":"انضافن "+o.added)+(m?` · ${m} ناقصها شي`:" ✓"):"ما لگيت صوت أو كتابة بالملف")}
+  if(o.ev==="bulk-wait"){bk={wait:1};api.show(`<h3>كذا مجلس</h3><div class="zd-bk-w"><i></i>دا أفتح ${o.n>1?ar(o.n)+" ملفات":"الملف"}…</div>`)}
+  if(o.ev==="bulk-scan"){if(!o.ok){bk=null;if(!o.none){api.hide();api.toast("ما گدرت أفتح الملفات")}return}bulkScanned(o.files||[])}
+  if(o.ev==="bulk")bulkAt(o.done,o.total);
   if(o.ev==="state"&&isOpen()){load();const c=cur();if(c.v!=="listen")draw()}
   if(o.ev==="synced"&&isOpen()){load();const c=cur();if(c.v!=="listen"||c.id===o.id)draw()}};
 
 /* ---------- صفحة القراءة: مثل الكتاب، ما تتحرك ويا الصوت ---------- */
 function rdOpen(id,at,len,swap){const i=item(id);if(!i)return;let t="";try{t=Z().text(id)||""}catch(e){}
   if(!rd){rd=document.createElement("section");rd.id="zdRd";rd.hidden=true;document.body.appendChild(rd)}
-  rd.dataset.id=id;rd.hidden=false;document.body.classList.add("zd-rdo");if(!swap)try{history.pushState({zd:"rd"},"")}catch(e){}
-  rd.innerHTML=`<div class="zd-rbar"><button class="zd-back" data-zrb style="margin:0">→ رجوع</button><div class="r"><button data-zf="-2">A-</button><button data-zf="2">A+</button><button data-zmk>علاماتي</button></div></div>
+  rd.dataset.id=id;rd.hidden=false;rd._ed=0;rd.classList.remove("zd-editing");{const eb=$(".zd-edb",rd);if(eb)eb.hidden=true}document.body.classList.add("zd-rdo");if(!swap)try{history.pushState({zd:"rd"},"")}catch(e){}
+  rd.innerHTML=`<div class="zd-rbar"><button class="zd-back" data-zrb style="margin:0">→ رجوع</button><div class="r">${i.sec==="b"&&t&&has()&&Z().setText?`<button data-zed-t>✎ تعديل</button>`:""}<button data-zf="-2">A-</button><button data-zf="2">A+</button><button data-zmk>علاماتي</button></div></div>
   <div class="zd-page" id="zdPage" style="--zfz:${fz()}px"><h2>${esc(i.t)}</h2><p class="sub">${i.sec==="b"?`المحاضرة <span class="zd-n">${i.n}</span> · `:""}<span class="zd-n">${i.dur?fmt(i.dur):""}</span></p>
-  <div class="zd-txt" id="zdTxt"></div><p class="zd-endp">— نهاية ${i.sec==="b"?"المحاضرة "+i.n:"الكتابة"} —</p></div>`;
+  <div class="zd-txt zd-read" id="zdTxt"></div><p class="zd-endp">— نهاية ${i.sec==="b"?"المحاضرة "+i.n:"الكتابة"} —</p></div>`;
   rd._t=t;rd._m=(J("marks",id)||[]).filter(m=>m&&m.end>m.start);rd._q=at!=null?[at,at+(len||1)]:null;
   render();try{Z().quiet(true)}catch(e){}
   requestAnimationFrame(()=>{const page=$("#zdPage",rd),el=$(rd._q?".q":".zd-here",rd);if(el){page.scrollTop=Math.max(0,el.getBoundingClientRect().top-page.getBoundingClientRect().top-page.clientHeight/3)}
@@ -244,7 +320,7 @@ function rdOpen(id,at,len,swap){const i=item(id);if(!i)return;let t="";try{t=Z()
   document.removeEventListener("selectionchange",onSel);document.addEventListener("selectionchange",onSel)}
 function rdClose(quiet){if(!rd||rd.hidden)return;saveRead();rd.hidden=true;document.body.classList.remove("zd-rdo");hideBar();document.removeEventListener("selectionchange",onSel);try{Z().quiet(false)}catch(e){}
   if(!quiet&&isOpen()){load();const c=cur();if(c.v==="listen")draw()}}
-// النص يتقسّم لقطع حسب العلامات ويتلوّن. النص الأصلي ما يتغيّر أبداً، والعلامات أرقام حروف منه.
+// النص يتقسّم لقطع حسب العلامات ويتلوّن. النص يتغيّر بس بـ«✎ تعديل» (والعلامات تتزحزح وياه)، والعلامات أرقام حروف منه.
 function render(){const t=rd._t,M=rd._m,i=item(rd.dataset.id),rp=i&&i.rp>0&&i.rp<t.length?i.rp:-1,Q=rd._q;
   const cuts=new Set([0,t.length]);M.forEach(m=>{cuts.add(Math.max(0,Math.min(t.length,m.start)));cuts.add(Math.max(0,Math.min(t.length,m.end)))});
   if(rp>0)cuts.add(rp);if(Q){cuts.add(Q[0]);cuts.add(Math.min(t.length,Q[1]))}
@@ -266,6 +342,43 @@ function saveRead(){if(!rd||rd.hidden)return;const page=$("#zdPage",rd),T=$("#zd
   try{Z().readAt(rd.dataset.id,o)}catch(e){}}
 function saveMarks(){try{Z().setMarks(rd.dataset.id,JSON.stringify(rd._m))}catch(e){}const page=$("#zdPage",rd),y=page.scrollTop;render();page.scrollTop=y;load()}
 
+/* ---------- تعديل الكتابة (تعديل القرآن ٢): بنفس مكانها ونفس الخط، والعلامات تتزحزح ويا الكلام ---------- */
+// الفرق بين النصين: اللي بالنص يبقى حرف حرف (Myers)، بعد ما نشيل الأول والآخر المتشابهين. map[i] = مكان الحرف القديم i بالجديد، أو -1 إذا انمسح
+function diffMap(a,b){const n=a.length,m=b.length;let p=0;while(p<n&&p<m&&a[p]===b[p])p++;let q=0;while(q<n-p&&q<m-p&&a[n-1-q]===b[m-1-q])q++;
+  const map=new Int32Array(n+1);for(let i=0;i<p;i++)map[i]=i;for(let i=0;i<q;i++)map[n-1-i]=m-1-i;map[n]=m;
+  const A=a.slice(p,n-q),B=b.slice(p,m-q),N=A.length,M=B.length;for(let i=0;i<N;i++)map[p+i]=-1;
+  if(!N||!M)return map;
+  const MAX=Math.min(N+M,4000),off=MAX+1,V=new Int32Array(2*MAX+3),T=[];let done=-1;
+  for(let d=0;d<=MAX&&done<0;d++){T.push(V.slice());
+    for(let k=-d;k<=d;k+=2){let x=k===-d||(k!==d&&V[off+k-1]<V[off+k+1])?V[off+k+1]:V[off+k-1]+1,y=x-k;
+      while(x<N&&y<M&&A[x]===B[y]){x++;y++}V[off+k]=x;if(x>=N&&y>=M){done=d;break}}}
+  if(done<0)return map; // تغيّر كلشي بالنص: الوسط ينحسب ممسوح وانكتب من جديد
+  let x=N,y=M;for(let d=done;d>0;d--){const W=T[d],k=x-y,pk=k===-d||(k!==d&&W[off+k-1]<W[off+k+1])?k+1:k-1,px=W[off+pk],py=px-pk;
+    while(x>px&&y>py){x--;y--;map[p+x]=p+y}x=px;y=py}
+  while(x>0&&y>0){x--;y--;map[p+x]=p+y}
+  return map}
+// علامة [start,end): أول حرف باقي منها لآخر حرف باقي. إذا كلامها انمسح كله تنشال
+function shiftMarks(M,map,n){const out=[];M.forEach(mk=>{let s=-1,e=-1;for(let i=Math.max(0,mk.start);i<Math.min(n,mk.end);i++){if(map[i]>=0){if(s<0)s=map[i];e=map[i]+1}}
+  if(s>=0&&e>s)out.push(Object.assign({},mk,{start:s,end:e}))});return out}
+function shiftAt(o,map,n){if(o==null||o<0)return o;for(let i=Math.min(o,n);i<=n;i++)if(map[i]>=0)return map[i];return map[n]}
+function edOpen(){if(!rd||rd.hidden||rd._ed)return;hideBar();getSelection().removeAllRanges();const T=$("#zdTxt",rd),page=$("#zdPage",rd),y=page.scrollTop;
+  rd._ed=1;rd.classList.add("zd-editing");
+  T.innerHTML=`<textarea class="zd-edt zd-read" id="zdEd" spellcheck="false" dir="rtl"></textarea>`;const ta=$("#zdEd",T);ta.value=rd._t;
+  const fit=()=>{ta.style.height="auto";ta.style.height=ta.scrollHeight+"px"};ta.oninput=fit;fit();page.scrollTop=y;
+  let eb=$(".zd-edb",rd);if(!eb){eb=document.createElement("div");eb.className="zd-edb";rd.appendChild(eb)}
+  eb.innerHTML=`<button class="zd-sv" data-zed-s>احفظ</button><button class="zd-edc" data-zed-c>إلغاء</button>`;eb.hidden=false}
+function edClose(){rd._ed=0;rd.classList.remove("zd-editing");const eb=$(".zd-edb",rd);if(eb)eb.hidden=true;const page=$("#zdPage",rd),y=page.scrollTop;render();page.scrollTop=y}
+function edCancel(){const ta=$("#zdEd",rd);if(ta&&ta.value!==rd._t){
+    api.show(`<h3>تلغي التعديل؟</h3><p class="zd-dmsg">اللي غيّرته ما ينحفظ.</p><button class="zd-del" id="zdEx">إي، ألغيه</button><button class="close" data-x>لا، كمّل</button>`);
+    $("#zdEx",$("#sheet")).onclick=()=>{api.hide();edClose()};return}
+  edClose()}
+function edSave(){const ta=$("#zdEd",rd);if(!ta)return;const nt=ta.value.replace(/\r\n?/g,"\n");if(nt===rd._t){edClose();return}
+  if(!nt.trim()){api.toast("الكتابة فارغة");return}
+  const old=rd._t,map=diffMap(old,nt),M=shiftMarks(rd._m,map,old.length),gone=rd._m.length-M.length,i=item(rd.dataset.id),rp=i&&i.rp>0?shiftAt(i.rp,map,old.length):-1;
+  let ok=false;try{ok=Z().setText(rd.dataset.id,nt,JSON.stringify(M),rp==null?-1:rp)}catch(e){}
+  if(!ok){api.toast("ما گدرت أحفظ");return}
+  rd._t=nt;rd._m=M;load();buzz(10);edClose();api.toast(gone?`انحفظ ✓ (${gone===1?"علامة وحدة انشالت":gone+" علامات انشالت"} لأن كلامها انمسح)`:"انحفظ ✓")}
+
 /* شريط التعليم: تسحب على كلام ويطلع فوقه */
 function bar(html,rect){if(!tbar){tbar=document.createElement("div");tbar.className="zd-tbar";tbar.hidden=true;document.body.appendChild(tbar);
     tbar.addEventListener("pointerdown",e=>e.preventDefault()); // ما يضيّع التحديد
@@ -275,7 +388,7 @@ function bar(html,rect){if(!tbar){tbar=document.createElement("div");tbar.classN
   tbar.style.left=Math.max(8,Math.min(innerWidth-w-8,x))+"px";tbar.style.top=y+"px"}
 function hideBar(){if(tbar)tbar.hidden=true}
 let selT=0,selR=null,tapM=null;
-function onSel(){clearTimeout(selT);selT=setTimeout(()=>{if(!rd||rd.hidden)return;const s=getSelection();
+function onSel(){clearTimeout(selT);selT=setTimeout(()=>{if(!rd||rd.hidden||rd._ed)return;const s=getSelection();
   if(!s||s.isCollapsed||!s.rangeCount){if(!tapM)hideBar();return}
   const r=s.getRangeAt(0),T=$("#zdTxt",rd);if(!T.contains(r.commonAncestorContainer)){hideBar();return}
   let a=offAt(r.startContainer,r.startOffset),b=offAt(r.endContainer,r.endOffset);const t=rd._t;
@@ -335,6 +448,10 @@ function pdf(){const L=items("b");if(!L.length)return;api.toast("دا أسوّي
 /* ---------- الدوسات ---------- */
 document.addEventListener("click",e=>{const at=s=>e.target.closest(s);let b;
   if(rd&&!rd.hidden&&e.target.closest("#zdRd")){
+    if(at("[data-zed-t]")){buzz(6);edOpen();return}
+    if(at("[data-zed-s]")){edSave();return}
+    if(at("[data-zed-c]")){edCancel();return}
+    if(rd._ed)return;
     if(at("[data-zrb]")){history.back();return}
     if(b=at("#zdRd [data-zf]")){setFz(+b.dataset.zf);$("#zdPage",rd).style.setProperty("--zfz",fz()+"px");return}
     if(at("[data-zmk]")){mkOpen();return}
@@ -384,7 +501,9 @@ function playKey(k,play){const i=item(k);
 let ownPop=0; // «زاد» وانت داخله = ترجع لأوله: هالرجوع احنا سويناه، مو زر الرجوع (تصليح ٢٢)
 addEventListener("popstate",e=>{if(ownPop){ownPop=0;return}if(e.state&&e.state.yc)return; // خطوة «بطايقي» مو إلنا (تصليح ٢٢)
   if(window.YQ&&YQ.back())return; // v1.26 المصحف وفهرسه أول
-  if(mk&&!mk.hidden){mkClose();return}if(rd&&!rd.hidden){rdClose();return}
+  if(mk&&!mk.hidden){mkClose();return}
+  if(rd&&!rd.hidden&&rd._ed){try{history.pushState({zd:"rd"},"")}catch(x){}edCancel();return} // يعدّل: الرجوع مثل «إلغاء»
+  if(rd&&!rd.hidden){rdClose();return}
   if(!isOpen())return;if(stk.length>1){stk.pop();load();draw()}else close()});
 document.addEventListener("visibilitychange",()=>{if(document.hidden){if(rd&&!rd.hidden)saveRead()}else if(isOpen()&&!(rd&&!rd.hidden)){load();const c=cur();if(c.v!=="listen")draw();else tick()}});
 
@@ -395,7 +514,9 @@ function namesHtml(){const n=N();return `<div class="zd-nmw"><button class="zd-n
   <label class="sp"><span class="h">القسم الأول</span><input class="inp" id="zdN1" maxlength="30" value="${esc(n.a)}"></label>
   <label class="sp"><span class="h">القسم الثاني</span><input class="inp" id="zdN2" maxlength="30" value="${esc(n.b)}"></label>
   <p>تكتب ويتغيّر مباشرة. «رجّع الأصلي» يرجّعها زاد · القرآن الكريم · زيارات وأدعية · مجالس.</p><button class="zd-nmb" id="zdNr">رجّع الأصلي</button></div>
-  ${hiddenN()?`<button class="zd-nmb zd-unh" id="zdUnh">رجّع الزيارات المحذوفة</button>`:""}</div>`}
+  ${hiddenN()?`<button class="zd-nmb zd-unh" id="zdUnh">رجّع الزيارات المحذوفة</button>`:""}${prevT()?`<button class="zd-nmb zd-unh" id="zdPrv">رجّع النسخة السابقة من «${esc(prevT())}»</button>`:""}</div>`}
+// تعديل القرآن ٢: آخر مجلس انعدلت كتابته (عنوانه)، وترجع كتابته وعلاماته مثل ما چانت قبل آخر تعديل
+function prevT(){const p=has()&&Z().prevInfo?J("prevInfo"):null;return p&&p.id&&item(p.id)?item(p.id).t:""}
 // v1.26 كم وحدة من الأصلية انحذفت (بالتلفون Zad.java، بلا التلفون cfg.zadHide)
 function hiddenN(){if(has()&&Z().hiddenCount){try{return Z().hiddenCount()}catch(e){}}return hid().length}
 function wireNames(root){const b=$("#zdNb",root),box=$("#zdNm",root);if(!b)return;
@@ -404,6 +525,8 @@ function wireNames(root){const b=$("#zdNb",root),box=$("#zdNm",root);if(!b)retur
     const c=api.cfg();if(Object.keys(z).length)c.zadN=z;else delete c.zadN;api.save();names()};
   [0,1,2,3].forEach(k=>$("#zdN"+k,root).oninput=put);
   $("#zdNr",root).onclick=()=>{$("#zdN0",root).value=NM0.z;$("#zdN3",root).value=NM0.q;$("#zdN1",root).value=NM0.a;$("#zdN2",root).value=NM0.b;put();buzz(8);api.toast("رجعت الأسماء ✓")};
+  const pv=$("#zdPrv",root);if(pv)pv.onclick=()=>{const t=prevT();api.show(`<h3>ترجع النسخة السابقة؟</h3><p class="zd-dmsg">كتابة «${esc(t)}» وعلاماتها ترجع مثل ما چانت قبل آخر تعديل.</p><button class="zd-sv" id="zdPrvY">رجّعها</button><button class="close" data-x>لا</button>`);
+    $("#zdPrvY",$("#sheet")).onclick=()=>{let ok=false;try{ok=Z().restorePrev()}catch(e){}api.hide();if(ok){pv.hidden=true;load();buzz(8);api.toast("رجعت ✓")}else api.toast("ما گدرت")}};
   const u=$("#zdUnh",root);if(u)u.onclick=()=>{if(has()&&Z().unhide){try{Z().unhide()}catch(e){}}else{delete api.cfg().zadHide;api.save()}
     load();u.hidden=true;buzz(8);api.toast("رجعت الزيارات ✓");if(isOpen())draw()}}
 // الأسماء بكل مكان: زر الشريط، الصفحة، والإشعار (بالتلفون)
@@ -416,6 +539,7 @@ function init(o){api=o;if(window.YQ)YQ.init(o);const z=document.getElementById("
   try{if(has()&&Z().names)Z().names(JSON.stringify(N()))}catch(e){}
   const P=new URLSearchParams(location.search),k=P.get("zad");
   if(k&&!P.has("widgetsync")){const r=P.get("at"),l=+(P.get("len")||1);["zad","at","len"].forEach(x=>P.delete(x));history.replaceState(null,"",location.pathname+(P.toString()?"?"+P:""));
-    setTimeout(()=>{open();load();if(k!=="1"&&item(k))go({v:"listen",id:k});if(k!=="1"&&r!=null&&item(k))rdOpen(k,+r,l)},0)}}
+    setTimeout(()=>{open();load();if(k==="a"||k==="b")go({v:"sec",s:k}); // ودجت «كمّل آخر شي»: زيارات / مجالس
+    else if(k!=="1"&&item(k))go({v:"listen",id:k});if(k!=="1"&&r!=null&&item(k))rdOpen(k,+r,l)},0)}}
 window.YZ={init,open,close,isOpen,depth,show,hist,leave,names,namesHtml,wireNames,refresh:()=>{if(isOpen()){load();draw()}}};
 })();
