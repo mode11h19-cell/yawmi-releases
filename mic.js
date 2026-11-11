@@ -28,10 +28,7 @@ function init(o){const H=hearer();if(!H||$(".y-micb"))return null;
   const b=document.createElement("button");b.className="y-micb";b.setAttribute("aria-label","احچي وضيف");
   b.innerHTML=`<span class="mi">${MIC}</span><span class="lv">${"<i></i>".repeat(22)}</span>${YM().CK}`;
   const rip=document.createElement("span");rip.className="y-rip";const dim=document.createElement("div");dim.className="y-dim";const said=document.createElement("div");said.className="y-said";said.setAttribute("aria-live","polite");
-  // الجزء ٣: سطر واحد وهو يسمعك، يحوّلك لحچي ويا ILO (APK 1.33 وفوگ)
-  const A=window.YawmiAndroid,ilo=A&&typeof A.iloTalk==="function"?document.createElement("button"):null;
-  if(ilo){ilo.className="y-ilo";ilo.textContent="احچي ويا ILO";ilo.onclick=()=>{H.cancel();reset();try{A.iloTalk()}catch(e){}}}
-  document.body.append(dim,said,rip,b);if(ilo)document.body.append(ilo);document.body.classList.add("y-has-mic");
+  document.body.append(dim,said,rip,b);document.body.classList.add("y-has-mic");
   const bars=[...b.querySelectorAll(".lv i")];
   // مكانه: يسار الشريط السفلي، بنفس طوله
   const place=()=>{const d=$(".dock");if(!d||document.body.classList.contains("y-mic-on"))return;const r=d.getBoundingClientRect();
