@@ -6,7 +6,7 @@
 const $=(s,r)=>(r||document).querySelector(s),B=()=>window.YawmiWa,has=()=>!!B();
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const REP=[["once","مرة وحدة"],["day","كل يوم"],["week","كل أسبوع"],["month","كل شهر"],["year","كل سنة"]];
-const WHY={lock:"تنتظر تفتح التليفون",net:"تنتظر النت",busy:"تنتظر تخلص اللي بيدك",acc:"إمكانية الوصول مطفية",max:"وصلت ٢٠ رسالة اليوم",nowa:"الواتساب ما انفتح",nobtn:"ما لگيت زر الإرسال","sent?":"ما تأكدت أنها راحت"};
+const WHY={lock:"تنتظر تفتح التليفون",net:"تنتظر النت",busy:"تنتظر تخلص اللي بيدك",start:"هسه تنرسل",acc:"إمكانية الوصول مطفية",max:"وصلت ٢٠ رسالة اليوم",nowa:"الواتساب ما انفتح",nochat:"المحادثة ما انفتحت",notext:"الرسالة ما انكتبت بالمحادثة",nobtn:"ما لگيت زر الإرسال","sent?":"ما تأكدت أنها راحت"};
 const IC={dock:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11.6a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.5-4.3a8.5 8.5 0 1 1 15.5-4.6z"/><path d="M9 9.2c0 3 2.6 5.6 5.6 5.6"/></svg>`,
   back:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>`,
   x:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`,
