@@ -498,6 +498,7 @@ function tgSheet(){
 const SI={img:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M6 16l4-4 3 3 2-2 3 3" stroke-linecap="round"/></svg>`,
   upd:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4.5h-4.5"/></svg>`,
   info:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.6v.2"/></svg>`,
+  mic:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/></svg>`,
   bell:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z" stroke-linejoin="round"/><path d="M10 20h4" stroke-linecap="round"/></svg>`,
   clock:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg>`,
   cal:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4" stroke-linecap="round"/></svg>`,
@@ -513,11 +514,14 @@ const srow=(ic,t,v,attr)=>`<button class="si" ${attr}><span class="ic">${SI[ic]}
 const sswi=(ic,t,on,attr)=>`<button class="si" ${attr} role="switch" aria-pressed="${!!on}"><span class="ic">${SI[ic]}</span><span class="t">${t}</span><span class="swi"></span></button>`;
 const sseg=(items)=>`<div class="seg">${items.join("")}</div>`;
 const remTxt=n=>n?n+" دقايق":"مطفي";
+// الجزء ٣ «صوت ILO» (APK 1.33 وفوگ): الصوت والمفتاحين بشاشة بالتلفون نفسه، هنا بس السطر اللي يفتحها
+const iloOn=()=>!!(window.YawmiAndroid&&typeof YawmiAndroid.iloSetup==="function");
+const iloTxt=()=>{try{const [n,ok]=String(YawmiAndroid.iloState()).split("|");return ok?n:"يحتاج مفاتيح"}catch(e){return ""}};
 function reS(f){const y=sheet.scrollTop;f();sheet.scrollTop=y}
 function setSheet(){
   const c=S.cfg,TH=[["light","صباحي"],["auto","تلقائي"],["dark","مسائي"]],A=ac(),P=pcfg();
   show(`<h3>الإعدادات</h3>
-  ${sgp("التذكير",srow("bell","قبل المهمة",remTxt(c.remind),'id="stR"')+(window.YawmiAndroid?srow("bell","الإشعارات",ntTxt(),'id="stN"'):""))}
+  ${sgp("التذكير",srow("bell","قبل المهمة",remTxt(c.remind),'id="stR"')+(window.YawmiAndroid?srow("bell","الإشعارات",ntTxt(),'id="stN"'):"")+(iloOn()?srow("mic","صوت ILO",iloTxt(),'id="stIlo"'):""))}
   ${sgp("يومي",srow("cal","أوقاتي",c.blocks.length?c.blocks.length+" أوقات":"ماكو",'id="stm"')+srow("alarm","المنبه",A.alarms.length?A.alarms.length+" منبه":"والنغمة",'id="stA"')+sswi("layers","وضع التنظيم",ORG(),'data-org')+`<p class="meta sorg">يرجّع الأسبوع وشرائط الساعات والمدة</p>`)}
   ${sgp("المنبهات",`<div class="sp"><span class="h">منبه الصبح ويا ملخص يومك من ILO</span>${sseg([`<button class="pill" data-wk="0" aria-pressed="${!A.wake.on}">مطفي</button>`,...WAKE.map(m=>`<button class="pill" data-wk="${m}" aria-pressed="${A.wake.on&&A.wake.m===m}" dir="ltr">${hm12(m)}</button>`)])}</div>`
     +sswi("ask","بعد المهمة يسألك «سويتها لو أأجّلها؟»",A.ask,`data-ak="${A.ask?0:1}"`)
@@ -544,7 +548,7 @@ function setSheet(){
   const nm=$("#nm");nm.onchange=()=>{c.name=nm.value.trim();save();render()};
   const mt=$("#mt");mt.onchange=()=>{c.motto=mt.value.trim().slice(0,80)||undefined;save();render()};
   const keep=()=>{nm.onchange();mt.onchange()};
-  $("#stR").onclick=()=>{keep();remSheet()};{const n=$("#stN");if(n)n.onclick=()=>{keep();ntSheet()}}
+  $("#stR").onclick=()=>{keep();remSheet()};{const n=$("#stN");if(n)n.onclick=()=>{keep();ntSheet()}}{const n=$("#stIlo");if(n)n.onclick=()=>{try{YawmiAndroid.iloSetup()}catch(e){}}}
   $("#stl").onclick=()=>{keep();tgSheet()};
   $("#stm").onclick=()=>{keep();timeSheet(setSheet)};
   $("#stA").onclick=()=>{keep();alarmSheet()};
