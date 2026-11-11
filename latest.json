@@ -1,7 +1,7 @@
 {
- "versionCode": 33,
- "versionName": "1.32",
+ "versionCode": 34,
+ "versionName": "1.33",
  "url": "https://raw.githubusercontent.com/mode11h19-cell/yawmi-releases/main/yawmi.apk",
- "sha256": "b14cf5f332cf50b767ac6bfe42e282497933b268502312b2ff6d451f30b23673",
- "notes": "انشالت «رسائلي» (الواتساب) كلها من التطبيق\n«ضيف» رجع لمكانه بالشريط"
+ "sha256": "7d16e154ff0b91cb4c3eef6612cba069a535b9ca26cdda06d97e3e5c45abdad2",
+ "notes": "ILO يحچي وياك بالصوت: من المايك «احچي ويا ILO»\nالإعدادات ← صوت ILO: حيدر أو زهراء، والمفتاحين\nيضيف ويأجّل ويعلّم المهام، يفتح الصفحات، وينسخ رقم الحساب\nILO يتصل بيك: «اتصل بيه بعد ربع ساعة»"
 }
