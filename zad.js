@@ -537,9 +537,12 @@ function init(o){api=o;if(window.YQ)YQ.init(o);const z=document.getElementById("
   z.id="mZyara";z.innerHTML=`<span class="k">${IC.dock}</span>${esc(N().z)}`;
   z.onclick=()=>{if(isOpen()){if(stk.length>1){const n=stk.length-1;stk=[stk[0]];draw();ownPop=1;try{history.go(-n)}catch(e){ownPop=0}}else pg.scrollTo({top:0,behavior:"smooth"});return}open()};
   try{if(has()&&Z().names)Z().names(JSON.stringify(N()))}catch(e){}
-  const P=new URLSearchParams(location.search),k=P.get("zad");
-  if(k&&!P.has("widgetsync")){const r=P.get("at"),l=+(P.get("len")||1);["zad","at","len"].forEach(x=>P.delete(x));history.replaceState(null,"",location.pathname+(P.toString()?"?"+P:""));
-    setTimeout(()=>{open();load();if(k==="a"||k==="b")go({v:"sec",s:k}); // ودجت «كمّل آخر شي»: زيارات / مجالس
-    else if(k!=="1"&&item(k))go({v:"listen",id:k});if(k!=="1"&&r!=null&&item(k))rdOpen(k,+r,l)},0)}}
-window.YZ={init,open,close,isOpen,depth,show,hist,leave,names,namesHtml,wireNames,refresh:()=>{if(isOpen()){load();draw()}}};
+  const P=new URLSearchParams(location.search);
+  if(P.get("zad")&&!P.has("widgetsync")){const D=new URLSearchParams(P);["zad","at","len"].forEach(x=>P.delete(x));history.replaceState(null,"",location.pathname+(P.toString()?"?"+P:""));
+    setTimeout(()=>deep(D),0)}}
+// فتح مباشر: ?zad=1 زاد، ?zad=a زيارات، ?zad=b مجالس (ودجت زاد)، ?zad=<id>[&at&len] مادة. بأول تحميل ومن YS.open (shell.js)
+function deep(P){const k=P.get("zad"),r=P.get("at"),l=+(P.get("len")||1);if(!k)return false;if(!isOpen())open();load();
+  if(k==="a"||k==="b"){const t=stk[stk.length-1];if(!(t&&t.v==="sec"&&t.s===k))go({v:"sec",s:k})}
+  else if(k!=="1"&&item(k))go({v:"listen",id:k});if(k!=="1"&&r!=null&&item(k))rdOpen(k,+r,l);if(window.YS)YS.shown();return true}
+window.YZ={init,deep,open,close,isOpen,depth,show,hist,leave,names,namesHtml,wireNames,refresh:()=>{if(isOpen()){load();draw()}}};
 })();

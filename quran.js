@@ -442,11 +442,14 @@ function cardHtml(){const s=state();if(!D||!AY){both().then(()=>{if(window.YZ&&Y
   if(!s.at&&s.page<=1&&s.a<0)return"";const g=goalLine(s),a=s.a>=0?s.a:firstOn(s.page);
   return `<button class="zd-qc" data-zqc="${s.page}"><small>كمّل القراءة</small><b>${esc(aname(a))}</b>${g?`<span class="g">${g}</span>`:""}<span class="ar">‹</span></button>`}
 
-function init(o){api=o;const P=new URLSearchParams(location.search),q=P.get("quran");
+// فتح مباشر: ?quran=i الفهرس، ?quran=<صفحة>[&a=<آية>] القراءة. بأول تحميل (init) ومن YS.open والتطبيق مفتوح (shell.js)
+function deep(P){const q=P.get("quran"),a=P.get("a");if(q==null)return false;if(window.YZ&&!YZ.isOpen())YZ.open();
+  if(q==="i")open();else open(+q||state().page||1,a!=null?+a:null);if(window.YS)YS.shown();return true}
+function init(o){api=o;const P=new URLSearchParams(location.search);
   if(P.has("widgetsync"))return;
   const note=P.has("qlock");
-  if(q!=null){const a=P.get("a");["quran","a","qlock"].forEach(x=>P.delete(x));history.replaceState(null,"",location.pathname+(P.toString()?"?"+P:""));
-    setTimeout(()=>{if(window.YZ)YZ.open();if(q==="i")open();else open(+q||state().page||1,a!=null?+a:null)},0)}
+  if(P.get("quran")!=null){const D=new URLSearchParams(P);["quran","a","qlock"].forEach(x=>P.delete(x));history.replaceState(null,"",location.pathname+(P.toString()?"?"+P:""));
+    setTimeout(()=>deep(D),0)}
   setTimeout(()=>lockSync(note),300);document.addEventListener("visibilitychange",()=>{if(!document.hidden)lockSync()})}
-window.YQ={init,open,close,isOpen,back,depth,cardHtml,state,srcHtml,lock:lockSync,pause,resume};
+window.YQ={init,deep,open,close,isOpen,back,depth,cardHtml,state,srcHtml,lock:lockSync,pause,resume};
 })();

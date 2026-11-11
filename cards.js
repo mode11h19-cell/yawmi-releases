@@ -260,7 +260,9 @@ function init(o){api=o;const b=document.createElement("button");b.id="mCards";b.
   b.onclick=()=>{if(isOpen()){scrollTo({top:0,behavior:"smooth"});return}open()};
   const at=document.getElementById("mWeek");if(at)at.after(b);else{const d=$(".dock");if(d)d.appendChild(b)}
   // اختصار أيقونة التطبيق: ?cards=1 أو ?cards=top
-  const P=new URLSearchParams(location.search),k=P.get("cards");
-  if(k&&!P.has("widgetsync")){P.delete("cards");history.replaceState(null,"",location.pathname+(P.toString()?"?"+P:""));setTimeout(()=>open(k==="top"?"top":"cards"),0)}}
-window.YC={init,open,close,isOpen,depth,show,hist,leave,catSheet,v2,refresh:()=>{if(isOpen()){load();draw()}}};
+  const P=new URLSearchParams(location.search);
+  if(P.get("cards")&&!P.has("widgetsync")){const D=new URLSearchParams(P);P.delete("cards");history.replaceState(null,"",location.pathname+(P.toString()?"?"+P:""));setTimeout(()=>deep(D),0)}}
+// فتح مباشر: ?cards=1 أو ?cards=top. بأول تحميل ومن YS.open (shell.js)
+function deep(P){const k=P.get("cards");if(!k)return false;open(k==="top"?"top":"cards");if(window.YS)YS.shown();return true}
+window.YC={init,deep,open,close,isOpen,depth,show,hist,leave,catSheet,v2,refresh:()=>{if(isOpen()){load();draw()}}};
 })();
