@@ -1,7 +1,7 @@
 {
- "versionCode": 31,
- "versionName": "1.30",
+ "versionCode": 32,
+ "versionName": "1.31",
  "url": "https://raw.githubusercontent.com/mode11h19-cell/yawmi-releases/main/yawmi.apk",
- "sha256": "2bcfb2da8851334f07cb6fc53a089f8ac7c5234447da45e3c31d4a86c74bb60b",
- "notes": "تصليح «رسائلي»: الرسالة المجدولة تندز بوقتها حتى لو التطبيق مسدود\nإذا ما راحت يكتب السبب بالضبط"
+ "sha256": "1680ced6bd2ab46a65f470d036e18fb9f3b511af69832497a74c560788f7b5e7",
+ "notes": "تصليح «رسائلي»: الرسالة اللي انرسلت تنكتب «انرسلت ✓✓» مو «ما انرسلت»"
 }
