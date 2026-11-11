@@ -9,7 +9,7 @@ body.hassa .hsay{font-size:12.5px;color:var(--f2);margin-top:2px;min-height:18px
 body.hassa .hsay::before{content:"› "}
 /* الدوك: هسه / زيارات / منبه / ضيف */
 body.hassa #mNow{order:1;color:var(--fg)}body.hassa #mNow .k{outline:1px solid var(--f3)}
-body.hassa #mZyara{order:2}body.hassa #mCards{order:3}body.hassa #mWa{order:4}
+body.hassa #mZyara{order:2}body.hassa #mCards{order:3}body.hassa #mAdd{order:4}
 /* الكارتات */
 /* بلا زجاج (backdrop-filter): الخلفية ورا الكارتات ناعمة فالشكل نفسه، والزجاج يبقى بس للشريط والجزيرة والشيت */
 .hcard{background:var(--gl);border:1px solid var(--gb);border-radius:22px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}

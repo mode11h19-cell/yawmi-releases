@@ -15,7 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
-<script>/* فتح صفحة مباشرة (shell.js ٣): الرئيسية مخفية لحد ما تنفتح الصفحة المطلوبة */if(/[?&](quran|zad|cards|wa)=/.test(location.search)&&!/[?&]widgetsync/.test(location.search))document.documentElement.classList.add("deep")</script>
+<script>/* فتح صفحة مباشرة (shell.js ٣): الرئيسية مخفية لحد ما تنفتح الصفحة المطلوبة */if(/[?&](quran|zad|cards)=/.test(location.search)&&!/[?&]widgetsync/.test(location.search))document.documentElement.classList.add("deep")</script>
 <style>html.deep .wrap{visibility:hidden}</style>
 <style>
 /* Claymorphism: soft 3D, chunky, rounded. Tasks are clay tiles sitting in three trays (morning / afternoon / evening). Tap any tile = clay sheet with big buttons. */
@@ -261,7 +261,6 @@ select.sel{border:0;border-radius:14px;padding:9px 12px;background:var(--bg);box
 <link rel="stylesheet" href="hassa.css">
 <link rel="stylesheet" href="motion.css">
 <link rel="stylesheet" href="cards.css">
-<link rel="stylesheet" href="wa.css">
 <link rel="stylesheet" href="zad.css">
 <link rel="stylesheet" href="quran.css">
 </head>
@@ -280,7 +279,7 @@ select.sel{border:0;border-radius:14px;padding:9px 12px;background:var(--bg);box
 </div>
 
 <nav class="dock" aria-label="أدوات">
-  <button id="mWa"><span class="k"></span>واتساب</button>
+  <button class="main" id="mAdd"><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span>ضيف</button>
   <button id="mArr"><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h9M4 12h7M4 18h9"/><circle cx="18" cy="13" r="4"/><path d="M18 11.3V13l1.2.8"/></svg></span>رتّب يومي</button>
   <button id="mTom"><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4M14 15h-4m2-2l-2 2 2 2"/></svg></span>باچر</button>
   <button id="mWeek"><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 4v16M9.7 4v16M14.3 4v16M19 4v16"/></svg></span>الأسبوع</button>
@@ -294,7 +293,6 @@ select.sel{border:0;border-radius:14px;padding:9px 12px;background:var(--bg);box
 <script src="motion.js"></script>
 <script src="mic.js"></script>
 <script src="cards.js"></script>
-<script src="wa.js"></script>
 <script src="quran.js"></script>
 <script src="zad.js"></script>
 <script src="widgets.js"></script>

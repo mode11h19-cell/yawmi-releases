@@ -722,7 +722,7 @@ document.addEventListener("click",e=>{
     return taskSheet(it)}
 });
 $("#mLink").innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>الإعدادات</span>`;$("#mLink").setAttribute("aria-label","الإعدادات");
-$("#mLink").onclick=setSheet;$("#mTime").remove();$("#mWeek").onclick=weekSheet;
+$("#mAdd").onclick=()=>addSheet();$("#mLink").onclick=setSheet;$("#mTime").remove();$("#mWeek").onclick=weekSheet;
 // «زيارات» صار «زاد» (zad.js): نفس الزر ونفس المكان، YZ.init يرسمه ويفتح القسم
 // «اليوم» بمكان «رتّب يومي»: index.html بعده بيه #mArr، هنا يتبدّل اسمه وشكله
 {const z=$("#mArr");z.id="mDay";z.innerHTML=`<span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 5h14M5 9.7h14M5 14.3h9M5 19h14"/></svg></span>اليوم`;z.onclick=()=>dayView()}
@@ -803,10 +803,9 @@ function alarmEdit(a){const isNew=!a,w=a?{...a,days:a.days.slice()}:{id:uid(),m:
 {const b=document.createElement("button");b.id="mAlarm";b.className="hb press";b.setAttribute("aria-label","المنبه");b.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="7"/><path d="M12 10v3l2 1.5M5 4L2.5 6.5M19 4l2.5 2.5"/></svg><span>المنبه</span>`;b.onclick=alarmSheet;$("#mLink").after(b)}
 // «بطايقي» (cards.js): زر بالشريط مكان المنبه، والبيانات بالتلفون بس
 if(window.YC)YC.init({cfg:()=>S.cfg,save,show,hide,toast,ui:()=>hassaUI()});
-if(window.YWA)YWA.init({toast,ui:()=>hassaUI()});
 // «زاد» (zad.js): زيارات وأدعية + مجالس، الصوت والكتابة بالتلفون
 if(window.YZ)YZ.init({cfg:()=>S.cfg,save,show,hide,toast,ui:()=>hassaUI()});
-$("#demo").onclick=()=>{clearDemo();save();render();toast("انمسحت. گول أول شغلة بالمايك وابدي")};
+$("#demo").onclick=()=>{clearDemo();save();render();toast("انمسحت. دوس «ضيف» وابدي")};
 
 /* ---------- «هسه»: الواجهة الجديدة (ثوابتي / براسي / مواعيد) ---------- */
 // الخانة تنعرف من الحقول الموجودة، بلا عمود جديد:
@@ -849,15 +848,15 @@ function hassaRender(){D=today();const T=D,A=itemsOn(T),now=nowM();
   let one=ras.find(t=>!hSkip.has(t.id));if(!one&&ras.length){hSkip.clear();one=ras[0]}
   h+=one?`<section class="hcard hone"><span class="lab">شغلة وحدة هسه</span><button class="big" data-hid="${one.id}">${esc(one.title)}</button>
     <div class="hbtns"><button class="hp w" data-hdo="${one.id}">سويتها</button><button class="hp" data-hlater="${one.id}">مو هسه</button><button class="hp" data-hdel="${one.id}">شيلها</button></div></section>`
-    :YM&&A.length&&A.every(i=>i.st==="done")?`<section class="hcard hone hempty">${YM.allDone("خلصت اليوم",hAll===true)}<span class="sub">عاشت ايدك. إذا خطرلك شي، گولها بالمايك</span></section>`
-    :`<section class="hcard hone hempty"><b class="big">ما براسك شي، ارتاح</b><span class="sub">إذا خطرلك شي، گولها بالمايك</span></section>`;
+    :YM&&A.length&&A.every(i=>i.st==="done")?`<section class="hcard hone hempty">${YM.allDone("خلصت اليوم",hAll===true)}<span class="sub">عاشت ايدك. إذا خطرلك شي، دوس «ضيف»</span></section>`
+    :`<section class="hcard hone hempty"><b class="big">ما براسك شي، ارتاح</b><span class="sub">إذا خطرلك شي، دوس «ضيف»</span></section>`;
   hAll=!one&&A.length>0&&A.every(i=>i.st==="done");
   const fd=fix.filter(i=>i.st==="done").length,ad=app.filter(i=>i.st!=="done").length;
   const row=(k,t,c,body)=>`<button class="fold${hOpen===k?" op":""}" data-hfold="${k}" aria-expanded="${hOpen===k}"><span>${t}</span><span class="k" data-yn="${k}">${c}</span></button>${hOpen===k?`<div class="hlist">${body}</div>`:""}`;
   const fixRow=i=>{const w=i.t.rep==="wk"?wkCount(i.t,T):null;return `<div class="it${i.st==="done"?" dn":""}"><button class="tt" data-hid="${i.id}">${esc(i.title)}</button>${w!=null?dots(i.t.wk||3,w):""}<button class="o" data-hok="${i.id}" aria-label="${i.st==="done"?"رجّعها":"سويتها"}"></button></div>`};
   const rasRow=t=>{const a=ageOf(t);return `<div class="it${a>7?" old":""}"><button class="tt" data-hid="${t.id}">${esc(t.title)}</button>${a>7?`<span class="ag">${ageTxt(a)}</span>`:""}<button class="o" data-hdo="${t.id}" aria-label="سويتها"></button></div>`};
   const appRow=i=>{const s=state(i);return `<div class="it${s==="done"?" dn":s==="late"?" late":""}"><span class="tm n">${hm(i.hour,i.em)}</span><button class="tt" data-hid="${i.id}">${esc(i.title)}</button><button class="o" data-hok="${i.id}" aria-label="${s==="done"?"رجّعها":"سويتها"}"></button></div>`};
-  h+=`<section class="hcard hfolds">${row("fix","ثوابتي",fix.length?`${arN(fd)} من ${arN(fix.length)} اليوم`:"ماكو",fix.map(fixRow).join("")||`<p class="hem">ماكو ثوابت. اسحب لتحت وضيف</p>`)}
+  h+=`<section class="hcard hfolds">${row("fix","ثوابتي",fix.length?`${arN(fd)} من ${arN(fix.length)} اليوم`:"ماكو",fix.map(fixRow).join("")||`<p class="hem">ماكو ثوابت. ضيفها من «ضيف» ← ثابت</p>`)}
     ${row("ras","براسي",ras.length?`${arN(ras.length)} ${ras.length===1?"شغلة":"شغلات"}`:"فاضية",ras.map(rasRow).join("")||`<p class="hem">ما براسك شي، ارتاح</p>`)}
     ${row("app","مواعيد",app.length?`${arN(ad)} اليوم`:"ماكو",app.map(appRow).join("")||`<p class="hem">ماكو مواعيد اليوم</p>`)}</section>`;
   hMorph($("#hassa"),h);
@@ -880,7 +879,7 @@ function hSync(a,b){const A=[...a.childNodes],B=[...b.childNodes];
 // الشريط السفلي والجزيرة يتبعون وين انت: الرئيسية لو شيت مفتوح، فوق الصفحة لو نازل
 let hIsl=null,hDockAt="mNow";
 function hassaUI(){if(!YM||!document.body.classList.contains("hassa"))return;
-  if(scrim.hidden)hDockAt=window.YC&&YC.isOpen()?"mCards":window.YWA&&YWA.isOpen()?"mWa":window.YZ&&YZ.isOpen()?"mZyara":"mNow";YM.dock(hDockAt);YM.island(hIsl,scrim.hidden&&scrollY<40)}
+  if(scrim.hidden)hDockAt=window.YC&&YC.isOpen()?"mCards":window.YZ&&YZ.isOpen()?"mZyara":"mNow";YM.dock(hDockAt);YM.island(hIsl,scrim.hidden&&scrollY<40)}
 addEventListener("scroll",()=>{if(hIsl)hassaUI()},{passive:true});
 // السحب لتحت (تحديث، أو خانة جديدة فوق القائمة المفتوحة) وزر المايك
 function hMotionInit(){
@@ -923,7 +922,7 @@ function hDone(id){const t=findT(id);if(!t)return;const sn=hSnap(id);
   const F=itemsOn(today()).filter(i=>i.rep!=="none");if(t.rep!=="none"&&F.length&&F.every(i=>i.st==="done"))btReact("party","سويت كل ثوابتك اليوم، الله يتقبّل",9000);else btDone()}
 document.addEventListener("click",e=>{if(ORG()||e.target.closest("#sheet"))return;
   const q=s=>e.target.closest(s);let b;
-  if(YM&&(b=q(".dock button"))){hDockAt=b.id;return}
+  if(YM&&(b=q(".dock button"))){hDockAt=b.id;if(b.id==="mAdd")YM.origin(b.querySelector(".k")||b);return}
   if(q("[data-hseen]")){S.cfg.hSeen=1;save();render();return}
   if(q("[data-hdemo]"))return $("#demo").click();
   if(b=q("[data-hfold]")){const k=b.dataset.hfold;hOpen=hOpen===k?"":k;render();if(YM&&hOpen)YM.unfold($("#hassa .hlist"));return}
@@ -979,7 +978,7 @@ function hSheet(it){const t=it.t,k=kindOf(t),T=today();
     const dg=q("[data-dgo]");if(dg){openDua(duaOf(it),dg.dataset.dgo==="play");return}}}
 const fixOpts=(rep,wk)=>`<div class="sec"><h4>شكد تتكرر؟</h4><div class="row" style="flex-wrap:wrap;gap:6px">${[["daily","كل يوم"],["work","أيام الدوام"],["wk","كم مرة بالأسبوع"]].map(([v,l])=>`<button class="pill" data-hrep="${v}" aria-pressed="${rep===v}">${l}</button>`).join("")}</div>
   ${rep==="wk"?`<div class="row hctr"><span class="meta">بالأسبوع</span><button class="pill" data-hwk="-1" aria-label="أقل">−</button><b class="n">${wk}</b><button class="pill" data-hwk="1" aria-label="أكثر">+</button></div>`:""}</div>`;
-// ورقة الإضافة (من السحب لتحت بالمواعيد، ومن ?text= و?voice=): براسي (المختار من البداية) / ثابت / موعد
+// ورقة «ضيف»: براسي (المختار من البداية) / ثابت / موعد
 function hAdd(o={}){const T=today(),st={kind:o.kind||"ras",day:o.day&&o.day>T?o.day:T,rep:"daily",wk:3,ap:null,hr:null,rem:true,text:o.text||""};
   const nh=(nowH()+1)%24;
   const draw=()=>{const k=st.kind,dd=[...Array(4)].map((_,j)=>add(T,j));
