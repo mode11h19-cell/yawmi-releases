@@ -1,7 +1,7 @@
 {
- "versionCode": 32,
- "versionName": "1.31",
+ "versionCode": 33,
+ "versionName": "1.32",
  "url": "https://raw.githubusercontent.com/mode11h19-cell/yawmi-releases/main/yawmi.apk",
- "sha256": "1680ced6bd2ab46a65f470d036e18fb9f3b511af69832497a74c560788f7b5e7",
- "notes": "تصليح «رسائلي»: الرسالة اللي انرسلت تنكتب «انرسلت ✓✓» مو «ما انرسلت»"
+ "sha256": "b14cf5f332cf50b767ac6bfe42e282497933b268502312b2ff6d451f30b23673",
+ "notes": "انشالت «رسائلي» (الواتساب) كلها من التطبيق\n«ضيف» رجع لمكانه بالشريط"
 }
