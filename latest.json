@@ -1,7 +1,7 @@
 {
- "versionCode": 35,
- "versionName": "1.34",
+ "versionCode": 36,
+ "versionName": "1.35",
  "url": "https://raw.githubusercontent.com/mode11h19-cell/yawmi-releases/main/yawmi.apk",
- "sha256": "057ad22323833cacc78ca056a797fc7e2052cdae61553634ee9a569acc379605",
- "notes": "إلغاء صوت ILO والاتصال: انشالت شاشة المكالمة وسطر «احچي ويا ILO» وسطر «صوت ILO» بالإعدادات\nانمسحت المفاتيح المحفوظة وصلاحيات المكالمات\nشخصية ILO والترحيب والباقي مثل ما هو"
+ "sha256": "6afdc40d9e4b9fe89e122b2a3dbf4d25b76f7c31723b89f92012adffd2f707f3",
+ "notes": "انشالت ميزة «يرجعك للقرآن»: «يومي» ما يطلع بعد بقائمة إمكانية الوصول\nمنبه وقت قراءة القرآن والقفل فوق شاشة القفل مثل ما هن"
 }
