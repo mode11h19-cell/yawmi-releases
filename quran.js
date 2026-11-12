@@ -330,8 +330,7 @@ function dlyDraw(){if(!dly){dly=document.createElement("div");dly.className="qr-
   <p class="qd-l">وقت قراءة القرآن</p>
   ${oldApp()?`<p class="qd-note">حدّث «يومي» من الإعدادات حتى تضيف أكثر من وقت.</p>`:`<div class="qw-list">${L.map(w=>`<div class="qw"><button class="qw-b" data-qw="${w.id}"><b>${esc(w.name||"قراءة")} · ${h12(w.m)}</b><small>${amount(w.kind,w.n)} · ${daysTxt(w.days)}${w.lock?LOCK:""}</small></button><button class="qw-sw" data-qwon="${w.id}" aria-pressed="${!!w.on}" aria-label="${w.on?"شغّال":"طافي"}"><i class="sw"></i></button></div>`).join("")||`<p class="qd-empty">بعد ما حاطّ وقت للقراءة</p>`}</div>
   <button class="qd-add" data-qwadd>＋ وقت</button>`}
-  <p class="qd-note">${phone?`كل وقت يبدي من وين وقفت. اللي بقفل يطلع فوق شاشة القفل وما تطلع لحد ما تخلص، والمكالمات تشتغل، وللطوارئ: دوس مطوّل ١٠ ثواني على الزر الصغير بالزاوية. اللي بلا قفل بس تنبيه.${s.guard===false&&L.some(w=>w.lock)?` <b>القفل يحتاج إذن «إمكانية الوصول» حتى يرجعك للقرآن إذا طلعت.</b>`:""}`:"المنبّهات تشتغل بتطبيق «يومي» بالموبايل."}</p>
-  ${s.guard===false&&phone&&L.some(w=>w.lock)?`<button class="qd-perm" data-qdperm>اسمح بـ«إمكانية الوصول»</button>`:""}`;
+  <p class="qd-note">${phone?`كل وقت يبدي من وين وقفت. اللي بقفل يطلع فوق شاشة القفل ويبقى مفتوح لحد ما تخلص، والمكالمات تشتغل، وللطوارئ: دوس مطوّل ١٠ ثواني على الزر الصغير بالزاوية. اللي بلا قفل بس تنبيه.`:"المنبّهات تشتغل بتطبيق «يومي» بالموبايل."}</p>`;
   dly.onclick=dlyClick}
 function wDraw(){const w=wEdit,all=w.days.length===7,custom=NAMES.includes(w.name)?"":w.name;
   dly.innerHTML=`<div class="qx-top"><button class="qr-c" data-qdb aria-label="رجوع">‹</button><h2 class="s">${w.id?"تعديل الوقت":"وقت جديد"}</h2><span style="width:40px"></span></div>
@@ -351,11 +350,10 @@ function wDraw(){const w=wEdit,all=w.days.length===7,custom=NAMES.includes(w.nam
 function wOpen(w){wEdit=w?JSON.parse(JSON.stringify(w)):{name:"",m:330,kind:"page",n:2,days:[0,1,2,3,4,5,6],lock:false,on:true};wDel=0;push("ward");dlyDraw()}
 function dlyClick(e){const b=e.target.closest("button");if(!b)return;
   if(b.matches("[data-qdb]")){history.back();return}
-  if(b.matches("[data-qdperm]")){guardSheet();return}
   if(!wEdit){const L=awrad();
     if(b.matches("[data-qwadd]")){buzz(6);wOpen(null);return}
     if(b.matches("[data-qw]")){buzz(6);wOpen(L.find(w=>w.id===+b.dataset.qw));return}
-    if(b.matches("[data-qwon]")){const w=L.find(x=>x.id===+b.dataset.qwon);if(!w)return;w.on=!w.on;setAwrad(L);buzz(8);dlyDraw();if(w.on&&w.lock)askGuard();return}
+    if(b.matches("[data-qwon]")){const w=L.find(x=>x.id===+b.dataset.qwon);if(!w)return;w.on=!w.on;setAwrad(L);buzz(8);dlyDraw();return}
     return}
   const w=wEdit;
   if(b.matches("[data-qwn]")){w.name=w.name===b.dataset.qwn?"":b.dataset.qwn;buzz(6);wDraw();return}
@@ -366,15 +364,11 @@ function dlyClick(e){const b=e.target.closest("button");if(!b)return;
   if(b.matches("[data-qwd]")){const i=+b.dataset.qwd;w.days=w.days.length===7?[i]:w.days.includes(i)?w.days.filter(x=>x!==i):[...w.days,i].sort();if(!w.days.length)w.days=[0,1,2,3,4,5,6];buzz(6);wDraw();return}
   if(b.matches("[data-qwlock]")){w.lock=!w.lock;buzz(8);wDraw();return}
   if(b.matches("[data-qwsave]")){const L=awrad(),i=L.findIndex(x=>x.id&&x.id===w.id);if(i>=0)L[i]=w;else L.push(w);setAwrad(L);buzz([10,30,10]);
-    const lk=w.lock&&w.on;wEdit=null;history.back();if(lk)setTimeout(askGuard,300);return}
+    wEdit=null;history.back();return}
   if(b.matches("[data-qwdel]")){if(!wDel){wDel=1;buzz(8);wDraw();return}setAwrad(awrad().filter(x=>x.id!==w.id));buzz([20,40]);wEdit=null;history.back();return}
   if(b.matches("[data-qdtry]")){buzz(8);const t=Object.assign({},w,{id:w.id||0});
     if(Q()&&Q().lockTest){try{Q().lockTest(JSON.stringify(t))}catch(x){}setTimeout(lockSync,250)}
     else{const s=state();lockStart(Object.assign(t,{start:s.page,a:s.a,test:true,open:true,at:Date.now()}))}return}}
-// إذن «إمكانية الوصول»: مرة وحدة، ونفهّمه ليش (بس للورد اللي بقفل)
-function askGuard(){const s=state();if(s.guard!==false||api.cfg().qgAsk)return;api.cfg().qgAsk=1;api.save();guardSheet()}
-function guardSheet(){api.show(`<h3>إذن وحيد</h3><p class="zd-dmsg" style="line-height:1.9">حتى ما تطلع من القرآن لحد ما تخلص، «يومي» يحتاج «إمكانية الوصول». ما يقرا شي من شاشتك ولا يكتب: بس إذا فتحت تطبيق ثاني وقت القراءة يرجعك للقرآن. المكالمات تشتغل عادي.<br>بالإعدادات: <b>التطبيقات المثبتة ← يومي ← شغّل</b>. إذا طلع رمادي: معلومات التطبيق ← ⋮ ← «السماح بالإعدادات المقيدة».</p><button class="zd-sv" id="qgGo">افتح الإعدادات</button><button class="close" data-x>بعدين</button>`);
-  $("#qgGo",$("#sheet")).onclick=()=>{api.hide();try{Q().guard()}catch(e){}}}
 
 /* ---------- الورد هسه ---------- */
 // بقفل: فوق شاشة القفل، ما يطلع ولا يرجع لحد «خلصت ✓». بلا قفل: خط رفيع جوه بس.
